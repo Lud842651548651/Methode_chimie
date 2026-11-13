@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Le Labo des Préparations</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Patrick+Hand&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Mise en page « Carnet de labo » : page de cahier quadrillé avec marge rouge, énoncé écrit sur le papier,
+   « À retenir » en post-it et calculatrice à droite (empilés sous l'énoncé sur téléphone).
+   Signature : la réponse s'écrit sur une ligne soulignée à l'encre bleue. */
+:root{
+  --paper:#fbfbf6; --grid:#dde5ee; --margin:#e8848a;
+  --surface:#ffffff; --ink:#1f2a44; --muted:#56627a; --line:#9aa8bd;
+  --accent:#2a4d9b; --accent-ink:#ffffff; --tint:#e9eef7;
+  --postit:#fff1a6; --postit-ink:#4a3d0e; --postit-title:#b8372f;
+  --calcdisp:#e9eef5;
+  --ok:#2f7d4f; --ok-bg:#e3f2e8; --ko:#b23c36; --ko-bg:#fbe6e4; --warn:#8a5a00; --warn-bg:#fff2d4;
+  --f-title:"Patrick Hand", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  --f-body:"Atkinson Hyperlegible", Verdana, Arial, sans-serif;
+  --f-num:"JetBrains Mono", Consolas, ui-monospace, monospace;
+  --fs:18px;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --paper:#151b29; --grid:#212a3d; --margin:#9c4a55;
+  --surface:#1c2436; --ink:#e4e8f2; --muted:#a3adc2; --line:#3a4560;
+  --accent:#8fb0ff; --accent-ink:#0d1730; --tint:#243052;
+  --postit:#3f381c; --postit-ink:#f1e6b5; --postit-title:#ff9d8f;
+  --calcdisp:#10151f;
+  --ok:#6fcf97; --ok-bg:#15301f; --ko:#f08a80; --ko-bg:#3a1c1a; --warn:#f0b74c; --warn-bg:#382a10;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background-color:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;color:var(--ink);font-family:var(--f-body);font-size:var(--fs);line-height:1.6;font-variant-numeric:tabular-nums;min-height:100vh}
+body::after{content:"";position:fixed;top:0;bottom:0;left:max(10px,calc((100vw - 1100px)/2 - 10px));width:2px;background:var(--margin);z-index:-1;pointer-events:none}
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{border-bottom:2px dashed var(--line)}
+header .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding-block:16px 12px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand svg{flex:none;color:var(--accent)}
+h1{font-family:var(--f-title);font-weight:400;font-size:2.1em;line-height:1;margin:0;color:var(--accent);text-wrap:balance}
+.sub{color:var(--muted);font-size:.8em;margin:2px 0 0}
+.tools{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.stars{font-family:var(--f-title);font-size:1.4em;color:var(--accent);margin-right:8px;letter-spacing:.06em}
+.stars .off{color:var(--line)}
+.stars .small{font-size:.75em}
+button{font:inherit;color:inherit;cursor:pointer}
+.tbtn{background:var(--surface);border:1.5px solid var(--line);border-radius:6px;padding:4px 10px;font-size:.8em}
+.tbtn[aria-pressed="true"]{background:var(--tint);border-color:var(--accent);color:var(--accent)}
+.btn{background:var(--accent);color:var(--accent-ink);border:2px solid var(--accent);border-radius:8px;padding:10px 22px;font-weight:700}
+.btn.ghost{background:var(--surface);color:var(--accent);border:2px solid var(--accent);font-weight:400}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible,label.opt:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+main{padding-block:22px 56px}
+h2{font-family:var(--f-title);font-weight:400;font-size:1.9em;line-height:1.1;margin:0 0 8px;color:var(--accent);text-wrap:balance}
+h3{font-family:var(--f-body);font-weight:700;font-size:1.05em;margin:0 0 6px}
+p{margin:0 0 10px}
+.enonce p{text-align:justify;hyphens:auto}
+.muted{color:var(--muted)}
+.small{font-size:.85em}
+/* Accueil */
+.card{background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:20px;box-shadow:0 2px 0 var(--grid)}
+.form{display:grid;gap:14px;max-width:460px}
+.form label{display:grid;gap:4px;font-weight:700}
+.form input,.form select{font:inherit;font-weight:400;padding:9px 12px;border:1.5px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+.missions{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:16px}
+.mcard{background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 0 var(--grid)}
+.mcard h3{font-family:var(--f-title);font-weight:400;font-size:1.5em;line-height:1.1;color:var(--accent);margin:0}
+.mcard.locked{opacity:.55}
+.mnum{font-family:var(--f-num);font-size:.75em;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.pill{align-self:flex-start;font-size:.75em;font-weight:700;padding:2px 10px;border-radius:99px;background:var(--tint);color:var(--ink)}
+.pill.done{background:var(--ok-bg);color:var(--ok)}
+.pill.lock{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+.mcard .btn{margin-top:auto}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.sendzone{margin-top:22px;display:grid;gap:10px}
+.status{font-size:.88em;padding:8px 12px;border-radius:6px}
+.status.ok{background:var(--ok-bg);color:var(--ok)}
+.status.ko{background:var(--ko-bg);color:var(--ko)}
+.status.wait{background:var(--tint)}
+/* Mission */
+.mtop{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px}
+.dots{display:flex;gap:8px;flex-wrap:wrap}
+.dot{width:22px;height:22px;border-radius:50%;border:2px dashed var(--line);background:transparent}
+.dot.cur{border:3px solid var(--accent)}
+.dot.ok{background:var(--ok);border:2px solid var(--ok)}
+.dot.ko{background:var(--ko);border:2px solid var(--ko)}
+.dot.ok2{background:var(--warn);border:2px solid var(--warn)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:40px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr);gap:28px}}
+.qcard{display:grid;gap:16px;min-width:0}
+.qcard>*{min-width:0}
+.ask{font-weight:700}
+.doc{min-width:0}
+.doc-t{display:inline-block;border:1.5px solid var(--ink);border-bottom:none;padding:2px 12px;font-weight:700;font-size:.85em;background:var(--surface)}
+.doc-c{border:1.5px solid var(--ink);padding:10px 14px;overflow-x:auto;background:var(--surface);font-size:.92em}
+aside{display:grid;gap:26px;min-width:0}
+.retenir{background:var(--postit);color:var(--postit-ink);padding:16px 20px 18px;transform:rotate(-1.2deg);box-shadow:0 6px 14px rgba(40,32,8,.18)}
+.retenir h3{font-family:var(--f-title);font-weight:400;font-size:1.6em;line-height:1;color:var(--postit-title);margin:0 0 8px}
+.retenir p{font-size:.88em}
+.formule{font-family:var(--f-num);font-weight:700;font-size:1.25em;padding:2px 0;display:block;margin:4px 0 8px;overflow-x:auto}
+.lcdlab{font-family:var(--f-title);font-size:1.4em;line-height:1;color:var(--accent);margin-bottom:4px;display:block}
+.lcd{display:flex;align-items:baseline;gap:12px;border-bottom:3px solid var(--accent);padding:2px 2px 4px}
+.lcd input{flex:1;min-width:0;width:0;background:transparent;border:none;color:var(--accent);font-family:var(--f-num);font-weight:500;font-size:1.7em;letter-spacing:.02em}
+.lcd input:focus{outline:none}
+.lcd:focus-within{outline:3px solid var(--accent);outline-offset:4px;border-radius:2px}
+.lcd input::placeholder{color:var(--line)}
+.lcd input:disabled{color:var(--ink)}
+.lcd .u{color:var(--muted);font-family:var(--f-num);font-size:1.2em;white-space:nowrap}
+.lcd.flash{animation:flash .9s ease-out}
+@keyframes flash{0%{background:var(--tint)}100%{background:transparent}}
+.hintline{font-size:.8em;color:var(--muted);margin:6px 0 0}
+fieldset{border:none;margin:0;padding:0;display:grid;gap:8px}
+legend{padding:0;margin-bottom:6px;font-weight:700}
+label.opt{display:flex;gap:12px;align-items:center;padding:11px 14px;border:1.5px solid var(--line);border-radius:8px;cursor:pointer;background:var(--surface)}
+label.opt input{width:1.1em;height:1.1em;accent-color:var(--accent);flex:none}
+label.opt:has(input:checked){border-color:var(--accent);background:var(--tint)}
+label.opt.good{border-color:var(--ok);background:var(--ok-bg)}
+label.opt.bad{border-color:var(--ko);background:var(--ko-bg)}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.method{background:var(--surface);border:1.5px dashed var(--accent);border-radius:8px;padding:12px 16px}
+.method b{font-family:var(--f-title);font-weight:400;font-size:1.3em;color:var(--accent)}
+.method ol{margin:6px 0 0;padding-left:1.3em}
+.method li{margin-bottom:4px}
+.fb{border-radius:8px;padding:12px 16px;border:2px solid}
+.fb.ok{background:var(--ok-bg);border-color:var(--ok)}
+.fb.ko{background:var(--ko-bg);border-color:var(--ko)}
+.cswarn{margin:10px 0 0;padding:8px 12px;border-radius:6px;background:var(--warn-bg);color:var(--ink);border-left:4px solid var(--warn)}
+.fb.retry{background:var(--warn-bg);border-color:var(--warn)}
+.fb.retry .verdict{color:var(--warn)}
+.fb .verdict{font-family:var(--f-title);font-size:1.45em;line-height:1.1}
+.fb.ok .verdict{color:var(--ok)}
+.fb.ko .verdict{color:var(--ko)}
+.corr{margin-top:8px;line-height:1.9}
+.corr .l{display:block;overflow-x:auto}
+.score{font-family:var(--f-title);font-size:4.5em;color:var(--accent);line-height:1}
+sub,sup{font-size:.72em;line-height:0}
+.calc{background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:8px}
+.calc h3{margin:0;font-family:var(--f-title);font-weight:400;font-size:1.4em;line-height:1;color:var(--accent)}
+.cdisp{background:var(--calcdisp);border-radius:6px;padding:8px 12px;display:grid;gap:2px}
+.cdisp .hist{color:var(--muted);font-family:var(--f-num);font-size:.75em;text-align:right;min-height:1.2em;overflow-x:auto;white-space:nowrap}
+.cdisp input{background:transparent;border:none;color:var(--ink);font-family:var(--f-num);font-size:1.25em;text-align:right;width:100%;min-width:0}
+.cdisp input:focus{outline:none}
+.cdisp:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+.ckeys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.ck{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 0;font-family:var(--f-num);font-weight:500;font-size:.95em;color:var(--ink)}
+.ck.op{background:var(--tint)}
+.ck.eq{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);grid-column:span 4;font-weight:700}
+.ck:active{transform:translateY(1px)}
+.cerr{color:var(--ko);font-size:.8em;min-height:1.2em;margin:0}
+.cinfo{color:var(--ok);font-size:.8em;margin:0}
+.cerr:empty,.cinfo:empty{display:none}
+/* Lecture facilitée */
+body.ease{letter-spacing:.04em;word-spacing:.16em;line-height:1.85}
+body.ease .enonce p{text-align:left;hyphens:none}
+@media (prefers-reduced-motion:no-preference){.qcard,.fb{animation:rise .25s ease-out}@keyframes rise{from{transform:translateY(6px)}to{transform:none}}}
+@media (prefers-reduced-motion:reduce){.retenir{transform:none}.lcd.flash{animation:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><rect x="4" y="26" width="32" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="10" y="29" width="14" height="4" rx="1" fill="var(--accent)"/><path d="M15 6h10M17 6v8l-6 12h18l-6-12V6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      <div><h1>Le Labo des Préparations</h1><p class="sub">ST2S · Masse molaire, quantité de matière, dilution, dissolution, concentration molaire</p></div>
+    </div>
+    <div class="tools" role="toolbar" aria-label="Affichage">
+      <span class="stars" id="stars" aria-live="polite"></span>
+      <button class="tbtn" id="fsMinus" aria-label="Réduire la taille du texte">A−</button>
+      <button class="tbtn" id="fsPlus" aria-label="Agrandir la taille du texte">A+</button>
+      <button class="tbtn" id="easeBtn" aria-pressed="false">Lecture facilitée</button>
+    </div>
+  </div>
+</header>
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+/* ================== Réglages ================== */
+const WORKER = "https://resultatpolenord.lud-tek.workers.dev/";
+const JEU = "calculs_quantite_matiere_1st2s";
+const KEY = "labo_preparations_1st2s_v1";
+const NQ = 5, PASS = 4;
+const nq = k => MISSIONS[k].plan.length;
+const passOf = k => MISSIONS[k].pass||PASS;
+const TEST = (typeof location!=="undefined") && /[?&]test=1/.test(location.search);
+
+/* ================== Outils ================== */
+const pick = a => a[Math.floor(Math.random()*a.length)];
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const cap = s => s[0].toUpperCase()+s.slice(1);
+const nb = s => String(s).replace(/[  ]/g," ");
+function fz(x,sig){
+  if(Number.isInteger(x)&&Math.abs(x)>=10) return nb(x.toLocaleString("fr-FR"));
+  const a=Math.abs(x);
+  if(a<0.01){let e=Math.floor(Math.log10(a));let m=(x/Math.pow(10,e)).toPrecision(sig);if(Math.abs(+m)>=10){e++;m=(x/Math.pow(10,e)).toPrecision(sig)}return m.replace(".",",")+" × 10<sup>"+e+"</sup>";}
+  return x.toPrecision(sig).replace(".",",");
+}
+/* valeur d'énoncé : garde au moins 2 chiffres significatifs */
+function fv(x){x=+x.toPrecision(6);const sig=Math.max(2,x.toExponential().split("e")[0].replace(/[-.]/g,"").length);return fz(x,sig);}
+/* résultat : 3 chiffres significatifs */
+function fmt(x,sig=3){
+  if(x===0) return "0";
+  const a=Math.abs(x);
+  if(a>=0.01&&a<1e5) return nb(Number(x.toPrecision(sig)).toLocaleString("fr-FR",{maximumFractionDigits:8}));
+  let e=Math.floor(Math.log10(a)), m=Number((x/Math.pow(10,e)).toPrecision(sig));
+  if(Math.abs(m)>=10){m/=10;e++}
+  return nb(m.toLocaleString("fr-FR",{maximumFractionDigits:8}))+" × 10<sup>"+e+"</sup>";
+}
+const f1 = x => x.toFixed(1).replace(".",",");
+/* écriture avec un nombre imposé de chiffres significatifs (les zéros finaux sont gardés) */
+function fs(x,sig){
+  if(x===0) return "0";
+  const r=Number(x.toPrecision(sig));const e=Math.floor(Math.log10(Math.abs(r)));
+  if(Math.abs(r)<0.001||e>=sig){
+    const m=(r/Math.pow(10,e)).toFixed(sig-1).replace(".",",");
+    return m+" × 10<sup>"+(e<0?"−"+(-e):e)+"</sup>";
+  }
+  let t=r.toFixed(Math.max(0,sig-1-e));
+  let [ip,dp]=t.split(".");ip=ip.replace(/\B(?=(\d{3})+(?!\d))/g," ");
+  return dp?ip+","+dp:ip;
+}
+/* nombre de chiffres significatifs d'un nombre écrit (les zéros finaux comptent) */
+function cs(str){
+  let t=String(str).replace(/<sup>.*?<\/sup>/g,"").replace(/\s+/g,"").replace(/[−–]/g,"-").replace(/,/g,".");
+  t=t.replace(/[x×*]10\^?.*$/i,"").replace(/e.*$/i,"").replace(/^[-+]/,"");
+  const d=t.replace(".","").replace(/^0+/,"");
+  return d.replace(/[^0-9]/g,"").length;
+}
+
+const vol = v => v.toFixed(1).replace(".",",");
+function qcm(choices,correct){const idx=shuffle(choices.map((_,i)=>i));return {type:"qcm",choices:idx.map(i=>choices[i]),correct:idx.indexOf(correct)};}
+
+/* ================== Chimie ================== */
+const ATOM={H:1.0,C:12.0,N:14.0,O:16.0,Na:23.0,Cl:35.5};
+const DE_EL={H:"d'hydrogène",C:"de carbone",N:"d'azote",O:"d'oxygène",Na:"de sodium",Cl:"de chlore"};
+function parse(f){const r=[];f.replace(/([A-Z][a-z]?)(\d*)/g,(_,e,n)=>{r.push([e,n?+n:1]);return ""});return r;}
+const molarM = f => Math.round(parse(f).reduce((s,[e,n])=>s+n*ATOM[e],0)*10)/10;
+const fH = f => f.replace(/(\d+)/g,"<sub>$1</sub>");
+const MOLS=[
+ {n:"eau",f:"H2O",de:"de l'eau",d:"constituant principal du corps humain"},
+ {n:"glucose",f:"C6H12O6",de:"du glucose",d:"sucre transporté par le sang"},
+ {n:"dioxyde de carbone",f:"CO2",de:"du dioxyde de carbone",d:"gaz rejeté lors de l'expiration"},
+ {n:"éthanol",f:"C2H6O",de:"de l'éthanol",d:"alcool des gels hydroalcooliques"},
+ {n:"urée",f:"CH4N2O",de:"de l'urée",d:"déchet azoté éliminé dans l'urine"},
+ {n:"acide ascorbique",f:"C6H8O6",de:"de l'acide ascorbique",d:"vitamine C"},
+ {n:"paracétamol",f:"C8H9NO2",de:"du paracétamol",d:"médicament contre la douleur et la fièvre"},
+ {n:"aspirine",f:"C9H8O4",de:"de l'aspirine",d:"médicament anti-inflammatoire"},
+ {n:"ibuprofène",f:"C13H18O2",de:"de l'ibuprofène",d:"médicament anti-inflammatoire"},
+ {n:"caféine",f:"C8H10N4O2",de:"de la caféine",d:"stimulant présent dans le café"},
+ {n:"saccharose",f:"C12H22O11",de:"du saccharose",d:"sucre de table"},
+ {n:"acide lactique",f:"C3H6O3",de:"de l'acide lactique",d:"produit par les muscles pendant l'effort"},
+ {n:"glycérol",f:"C3H8O3",de:"du glycérol",d:"présent dans les crèmes hydratantes"},
+ {n:"chlorure de sodium",f:"NaCl",de:"du chlorure de sodium",d:"sel du sérum physiologique"},
+ {n:"hydrogénocarbonate de sodium",f:"NaHCO3",de:"de l'hydrogénocarbonate de sodium",d:"bicarbonate utilisé contre les brûlures d'estomac"},
+ {n:"peroxyde d'hydrogène",f:"H2O2",de:"du peroxyde d'hydrogène",d:"eau oxygénée, antiseptique"},
+ {n:"ammoniac",f:"NH3",de:"de l'ammoniac",d:"présent dans certains produits ménagers"},
+ {n:"acide éthanoïque",f:"C2H4O2",de:"de l'acide éthanoïque",d:"acide du vinaigre"},
+ {n:"hydroxyde de sodium",f:"NaOH",de:"de l'hydroxyde de sodium",d:"soude des déboucheurs de canalisations"}
+];
+const molByName = n => MOLS.find(m=>m.n===n);
+const part = mo => (/^[aeéèiouyh]/i.test(mo.n)?"d'":"de ")+mo.n;
+const dP = x => (/^[aeéèiouyh]/i.test(x)?"d'":"de ")+x;
+const deS = s => s.replace(/^une /,"d'une ").replace(/^un /,"d'un ").replace(/^du /,"de ");
+function dataAtoms(f){
+  const set=new Set(parse(f).map(a=>a[0]));["H","C","O"].forEach(e=>set.add(e));
+  const order=["H","C","N","O","Na","Cl"];
+  return "Masses molaires atomiques : "+order.filter(e=>set.has(e)).map(e=>`M(${e}) = ${f1(ATOM[e])} g/mol`).join(" ; ")+".";
+}
+function corrM(mo){
+  const at=parse(mo.f);
+  const sym=at.map(([e,n])=>(n>1?n+" × ":"")+`M(${e})`).join(" + ");
+  const num=at.map(([e,n])=>(n>1?n+" × ":"")+f1(ATOM[e])).join(" + ");
+  return `<span class="l">M(${fH(mo.f)}) = ${sym}</span><span class="l">M(${fH(mo.f)}) = ${num} = <b>${f1(molarM(mo.f))} g/mol</b></span>`;
+}
+const ACT=["Un technicien de laboratoire","Une technicienne de laboratoire","Un préparateur en pharmacie","Une préparatrice en pharmacie","Une infirmière","Un infirmier","Une élève de ST2S en TP","Un élève de ST2S en TP"];
+const PRENOMS=["Inès","Lucas","Yanis","Chloé","Malik","Emma","Sofia","Noah"];
+const Cme="C<sub>mère</sub>", Cfi="C<sub>fille</sub>", Vme="V<sub>mère</sub>", Vfi="V<sub>fille</sub>", Cmass="C<sub>m</sub>";
+
+/* ================== Mission 1 : masse molaire ================== */
+const G1={
+ M(){
+  const mo=pick(MOLS.filter(x=>parse(x.f).length>1));const M=molarM(mo.f);const at=parse(mo.f);
+  const naive=Math.round(at.reduce((s,[e])=>s+ATOM[e],0)*10)/10;
+  return {type:"num",ctx:`<b>${cap(mo.n)}</b> : ${mo.d}. Sa formule brute est ${fH(mo.f)}.`,data:dataAtoms(mo.f),
+   ask:`Calculer la masse molaire moléculaire M ${mo.de}.`,unit:"g/mol",ans:M,noSig:true,show:f1(M),rel:0.012,
+   traps:naive!==M?[[naive,"Tu as additionné les masses molaires atomiques sans les multiplier par le nombre d'atomes de chaque élément."]]:[],
+   corr:corrM(mo)};
+ },
+ count(){
+  const mo=pick(MOLS.filter(x=>!x.f.includes("Na")&&parse(x.f).some(a=>a[1]>1)));
+  const at=parse(mo.f);const [e,n]=pick(at.filter(a=>a[1]>1));
+  const tot=at.reduce((s,a)=>s+a[1],0);
+  const opts=[n];[tot,n+1,n>2?n-1:n+2,...at.map(a=>a[1]),n+3].forEach(v=>{if(opts.length<4&&!opts.includes(v))opts.push(v)});
+  const q=qcm(opts.map(String),0);
+  return {...q,ctx:`<b>${cap(mo.n)}</b> : ${mo.d}. Sa formule brute est ${fH(mo.f)}.`,
+   ask:`Combien d'atomes ${DE_EL[e]} contient une molécule ${part(mo)} ?`,
+   corr:`<span class="l">Dans ${fH(mo.f)}, le chiffre écrit en indice après le symbole ${e} est ${n} : la molécule contient <b>${n} atomes ${DE_EL[e]}</b>.</span>`,
+   method:["Repérer le symbole de l'élément dans la formule.","Lire le chiffre écrit en indice juste après ce symbole.","S'il n'y a pas de chiffre, il y a 1 seul atome."]};
+ },
+ expr(){
+  const mo=pick(MOLS.filter(x=>parse(x.f).length>1&&parse(x.f).some(a=>a[1]>1)));
+  const at=parse(mo.f);const tot=at.reduce((s,a)=>s+a[1],0);
+  const good=at.map(([e,n])=>(n>1?n+" × ":"")+`M(${e})`).join(" + ");
+  const w1=at.map(([e])=>`M(${e})`).join(" + ");
+  const w2=at.map(([e,n])=>(n>1?n+" × ":"")+`M(${e})`).join(" × ");
+  const w3=`${tot} × M(${at[0][0]})`;
+  const q=qcm([good,w1,w2,w3].map(s=>`M = ${s}`),0);
+  return {...q,ctx:`<b>${cap(mo.n)}</b> : ${mo.d}. Sa formule brute est ${fH(mo.f)}.`,
+   ask:`Quelle expression permet de calculer la masse molaire moléculaire M ${mo.de} ?`,
+   corr:`<span class="l">On multiplie chaque masse molaire atomique par le nombre d'atomes, puis on additionne : <b>M = ${good}</b>.</span>`};
+ },
+ sens(){
+  const e=pick(["C","O","N","H"]);const nom={C:"carbone",O:"oxygène",N:"azote",H:"hydrogène"}[e];
+  const q=qcm([`une mole d'atomes ${DE_EL[e]} a une masse de ${f1(ATOM[e])} g`,`un seul atome ${DE_EL[e]} a une masse de ${f1(ATOM[e])} g`,`${f1(ATOM[e])} g ${DE_EL[e]} ${ATOM[e]>=2?"contiennent":"contient"} ${ATOM[e]} atome${ATOM[e]>=2?"s":""}`,`un litre ${DE_EL[e]} a une masse de ${f1(ATOM[e])} g`],0);
+  return {...q,ctx:`On lit dans les données : M(${e}) = ${f1(ATOM[e])} g/mol.`,ask:"Cette valeur signifie que :",
+   corr:`<span class="l">La masse molaire est la masse d'<b>une mole</b> d'entités : une mole d'atomes ${DE_EL[e]} a une masse de ${f1(ATOM[e])} g. Un seul atome est beaucoup trop léger pour être pesé.</span>`,
+   method:["La masse molaire est la masse d'une mole (et non d'un seul atome).","Son unité g/mol se lit « grammes par mole »."]};
+ },
+ unite(){
+  const q=qcm(["g/mol","g/L","mol/L","g"],0);
+  return {...q,ctx:"La masse molaire M d'une molécule est la masse d'une mole de ces molécules.",ask:"Quelle est l'unité de la masse molaire M ?",
+   corr:`<span class="l">Une masse (en g) pour une mole : la masse molaire s'exprime en <b>g/mol</b>. Le g/L est l'unité de la concentration massique.</span>`,
+   method:["La masse molaire est une masse divisée par une quantité de matière.","Masse en g, quantité de matière en mol."]};
+ },
+ check(){
+  const mo=pick(MOLS.filter(x=>parse(x.f).some(a=>a[1]>1)));const M=molarM(mo.f);const at=parse(mo.f);
+  const naive=Math.round(at.reduce((s,[e])=>s+ATOM[e],0)*10)/10;
+  const [e]=pick(at);const plus=Math.round((M+ATOM[e])*10)/10;
+  const right=Math.random()<.45;const shown=right?M:(naive!==M&&Math.random()<.6?naive:plus);
+  const who=pick(PRENOMS);
+  return {type:"qcm",choices:["Oui, le résultat est juste","Non, le résultat est faux"],correct:right?0:1,
+   ctx:`${who} a calculé la masse molaire ${mo.de} (${fH(mo.f)}) et trouve M = ${f1(shown)} g/mol.`,data:dataAtoms(mo.f),
+   ask:`Le résultat de ${who} est-il juste ?`,corr:corrM(mo)+(right?"":`<span class="l">${who} s'est trompé(e) : ${shown===naive?"les nombres d'atomes n'ont pas été pris en compte.":`un atome ${DE_EL[e]} a été compté en trop.`}</span>`)};
+ }
+};
+
+/* ================== Mission 2 : n = m / M ================== */
+const sM = M => cs(f1(M));
+const csNote = sig => `<span class="l small muted">Résultat arrondi à ${sig} chiffres significatifs, comme la donnée la moins précise.</span>`;
+const PHR_M=["Au laboratoire, on pèse une masse m = {m} g {de}.","Un flacon contient une masse m = {m} g {de}.","On dispose d'un échantillon de masse m = {m} g {de}.","Une préparatrice pèse m = {m} g {de} sur une balance."];
+const MASSES=[[0.90,2],[1.80,3],[2.5,2],[4.50,3],[5.0,2],[9.00,3],[10.0,3],[12,2],[18,2],[20.0,3],[25,2],[36,2],[45.0,3],[50,2],[100,3]];
+const DRUGS=[["paracétamol",[500]],["aspirine",[300,500]],["ibuprofène",[200,400]],["acide ascorbique",[500]],["caféine",[100,200]]];
+function nCorr(m,sm,M,sig,pre){return (pre||"")+`<span class="l">n = m / M = ${fs(m,sm)} / ${f1(M)}</span><span class="l">n = <b>${fs(m/M,sig)} mol</b></span>`+csNote(sig);}
+const G2={
+ N(atoms){
+  const mo=pick(MOLS);const M=molarM(mo.f);const [m,sm]=pick(MASSES);const sig=Math.min(sm,sM(M));
+  return {type:"num",ctx:pick(PHR_M).replace("{m}",fs(m,sm)).replace("{de}",part(mo))+` Formule brute : ${fH(mo.f)}.`,
+   data:atoms?dataAtoms(mo.f):`Masse molaire ${mo.de} : M = ${f1(M)} g/mol.`,
+   ask:atoms?`Calculer la masse molaire M ${mo.de}, puis la quantité de matière n ${part(mo)} contenue dans l'échantillon.`:`Calculer la quantité de matière n ${part(mo)} contenue dans l'échantillon.`,
+   unit:"mol",ans:m/M,sig,rel:0.025,
+   traps:[[m*M,"Tu as multiplié. La relation est n = m / M : on divise la masse par la masse molaire."],[M/m,"Tu as inversé la division : n = m / M (la masse en haut, la masse molaire en bas)."]],
+   corr:nCorr(m,sm,M,sig,atoms?corrM(mo):""),
+   method:atoms?["Calculer d'abord la masse molaire M en additionnant les masses molaires des atomes (sans oublier les nombres d'atomes).","Vérifier que la masse m est en grammes.","Appliquer n = m / M.","Écrire le résultat en mol."]:null};
+ },
+ Natoms(){return G2.N(true)},
+ mg(){
+  const [nom,doses]=pick(DRUGS);const mo=molByName(nom);const M=molarM(mo.f);const d=pick(doses);const m=d/1000;const sig=Math.min(3,sM(M));
+  return {type:"num",ctx:`Un comprimé contient m = ${d} mg ${part(mo)} (${mo.d}), de formule ${fH(mo.f)}.`,
+   data:`Masse molaire ${mo.de} : M = ${f1(M)} g/mol. Rappel : 1 g = 1 000 mg.`,
+   ask:`Calculer la quantité de matière n ${part(mo)} contenue dans un comprimé.`,unit:"mol",ans:m/M,sig,rel:0.025,
+   traps:[[d/M,`Convertis d'abord la masse en grammes : ${d} mg = ${fs(m,3)} g.`],[m*M,"Tu as multiplié : n = m / M."]],
+   corr:`<span class="l">Conversion : m = ${d} mg = ${fs(m,3)} g</span>`+nCorr(m,3,M,sig),
+   method:["Convertir la masse en grammes : on divise par 1 000 (1 g = 1 000 mg).","Appliquer n = m / M.","Écrire le résultat en mol."]};
+ },
+ formula(){
+  if(Math.random()<.5){const q=qcm(["n = m / M","n = m × M","n = M / m","n = m + M"],0);
+   return {...q,ctx:"On connaît la masse m d'un échantillon et la masse molaire M de l'espèce chimique.",ask:"Quelle relation permet de calculer la quantité de matière n ?",
+    corr:`<span class="l"><b>n = m / M</b> : plus la masse est grande, plus il y a de matière ; plus les molécules sont lourdes, moins il y en a.</span>`};}
+  const q=qcm(["n en mol, m en g, M en g/mol","n en g, m en mol, M en g/mol","n en mol, m en kg, M en mol/g","n en mol/L, m en g, M en g/L"],0);
+  return {...q,ctx:"On utilise la relation n = m / M.",ask:"Quelles sont les unités à utiliser ?",corr:`<span class="l"><b>n en mol, m en g, M en g/mol</b> : g ÷ (g/mol) = mol.</span>`};
+ },
+ compare(){
+  let a,b;do{a=pick(MOLS);b=pick(MOLS)}while(Math.abs(molarM(a.f)-molarM(b.f))<5);
+  const Ma=molarM(a.f),Mb=molarM(b.f);const m=pick([10.0,20.0,50.0]);
+  const q=qcm([`l'échantillon ${part(a)}`,`l'échantillon ${part(b)}`,"les deux échantillons contiennent la même quantité de matière"],Ma<Mb?0:1);
+  return {...q,ctx:`On pèse deux échantillons de même masse m = ${fs(m,3)} g : l'un ${part(a)} (${fH(a.f)}), l'autre ${part(b)} (${fH(b.f)}).`,
+   data:`M(${fH(a.f)}) = ${f1(Ma)} g/mol ; M(${fH(b.f)}) = ${f1(Mb)} g/mol.`,
+   ask:"Quel échantillon contient la plus grande quantité de matière ?",
+   corr:`<span class="l">n(${fH(a.f)}) = ${fs(m,3)} / ${f1(Ma)} = ${fs(m/Ma,3)} mol</span><span class="l">n(${fH(b.f)}) = ${fs(m,3)} / ${f1(Mb)} = ${fs(m/Mb,3)} mol</span><span class="l">À masse égale, l'espèce qui a la plus petite masse molaire contient <b>le plus de moles</b>.</span>`,
+   method:["Calculer n = m / M pour chaque échantillon.","Comparer les deux résultats."]};
+ }
+};
+
+/* ================== Mission 3 : m = n × M ================== */
+const NLIST=[[0.010,2],[0.020,2],[0.025,2],[0.050,2],[0.10,2],[0.150,3],[0.200,3],[0.250,3],[0.500,3],[1.00,3],[1.50,3],[2.00,3],[0.0020,2],[0.0050,2]];
+const PHR_N=["Un protocole demande d'utiliser n = {n} mol {de}.","On souhaite préparer un échantillon contenant n = {n} mol {de}.","Pour une analyse, il faut n = {n} mol {de}."];
+function mCorr(n,sn,M,sig,pre){return (pre||"")+`<span class="l">m = n × M = ${fs(n,sn)} × ${f1(M)}</span><span class="l">m = <b>${fs(n*M,sig)} g</b></span>`+csNote(sig);}
+const G3={
+ m(atoms){
+  const mo=pick(MOLS);const M=molarM(mo.f);const [n,sn]=pick(NLIST);const sig=Math.min(sn,sM(M));
+  return {type:"num",ctx:pick(PHR_N).replace("{n}",fs(n,sn)).replace("{de}",part(mo))+` Formule brute : ${fH(mo.f)}.`,
+   data:atoms?dataAtoms(mo.f):`Masse molaire ${mo.de} : M = ${f1(M)} g/mol.`,
+   ask:atoms?`Calculer la masse molaire M ${mo.de}, puis la masse m ${part(mo)} à peser.`:`Calculer la masse m ${part(mo)} à peser.`,
+   unit:"g",ans:n*M,sig,rel:0.025,
+   traps:[[n/M,"Tu as divisé. Pour passer de n à m, on multiplie : m = n × M."],[M/n,"Pour passer de n à m, on multiplie : m = n × M."]],
+   corr:mCorr(n,sn,M,sig,atoms?corrM(mo):""),
+   method:atoms?["Calculer d'abord la masse molaire M (somme des masses des atomes).","Vérifier que n est en mol.","Appliquer m = n × M.","Écrire le résultat en g."]:null};
+ },
+ matoms(){return G3.m(true)},
+ mmol(){
+  const mo=pick(MOLS);const M=molarM(mo.f);const [nm,sn]=pick([[2.0,2],[5.0,2],[10,2],[20,2],[25,2],[50,2],[100,3],[250,3]]);const n=nm/1000;const sig=Math.min(sn,sM(M));
+  return {type:"num",ctx:`Un dosage nécessite n = ${fs(nm,sn)} mmol ${part(mo)} (${fH(mo.f)}).`,data:`Masse molaire ${mo.de} : M = ${f1(M)} g/mol. Rappel : 1 mol = 1 000 mmol.`,
+   ask:`Calculer la masse m ${part(mo)} correspondante.`,unit:"g",ans:n*M,sig,rel:0.025,
+   traps:[[nm*M,`Convertis d'abord en mol : ${fs(nm,sn)} mmol = ${fs(n,sn)} mol.`],[n/M,"Pour passer de n à m, on multiplie : m = n × M."]],
+   corr:`<span class="l">Conversion : n = ${fs(nm,sn)} mmol = ${fs(n,sn)} mol</span>`+mCorr(n,sn,M,sig),
+   method:["Convertir la quantité de matière en mol : on divise par 1 000.","Appliquer m = n × M.","Écrire le résultat en g."]};
+ },
+ formula(){
+  if(Math.random()<.5){const q=qcm(["m = n × M","m = n / M","m = M / n","m = n + M"],0);
+   return {...q,ctx:"On connaît la quantité de matière n et la masse molaire M d'une espèce chimique.",ask:"Quelle relation permet de calculer la masse m à peser ?",
+    corr:`<span class="l">De n = m / M, on tire <b>m = n × M</b>.</span>`};}
+  const q=qcm(["en g","en mol","en g/mol","en g/L"],0);
+  return {...q,ctx:"On calcule m = n × M avec n en mol et M en g/mol.",ask:"Le résultat s'exprime :",corr:`<span class="l">mol × g/mol = g : le résultat est une masse, <b>en g</b>.</span>`};
+ },
+ findmol(){
+  let set;do{set=shuffle(MOLS.slice()).slice(0,4)}while(set.some((x,i)=>set.some((y,j)=>i<j&&Math.abs(molarM(x.f)-molarM(y.f))<6)));
+  const t=set[0];const M=molarM(t.f);const n=pick([0.100,0.200,0.250,0.500]);const m=+(n*M).toPrecision(3);
+  const q=qcm(set.map(x=>`${x.n} (${fH(x.f)})`),0);
+  return {...q,ctx:`Au laboratoire, un flacon a perdu son étiquette. Un échantillon de masse m = ${fs(m,3)} g de son contenu correspond à une quantité de matière n = ${fs(n,3)} mol.`,
+   data:set.slice().sort((x,y)=>molarM(x.f)-molarM(y.f)).map(x=>`M(${fH(x.f)}) = ${f1(molarM(x.f))} g/mol`).join(" ; ")+".",
+   ask:"Calculer M = m / n, puis identifier l'espèce chimique contenue dans le flacon.",
+   corr:`<span class="l">M = m / n = ${fs(m,3)} / ${fs(n,3)} = ${fs(m/n,3)} g/mol</span><span class="l">C'est <b>${t.n}</b> (${fH(t.f)}).</span>`,
+   method:["Calculer M = m / n (on divise la masse par la quantité de matière).","Comparer le résultat aux masses molaires des données."]};
+ }
+};
+
+/* ================== Mission 4 : dilution ================== */
+const PIP=[1,2,5,10,20,25,50], FIO=[50,100,200,250,500,1000];
+const COMBOS=[];PIP.forEach(p=>FIO.forEach(f=>{const F=f/p;if(Number.isInteger(F)&&F>=2&&F<=100)COMBOS.push({Vm:p,Vf:f,F})}));
+const DIL=[
+ {sol:"une solution mère de glucose",u:"g/L",cf:[2.00,5.00,10.0,20.0],max:400},
+ {sol:"une solution antiseptique concentrée de chlorhexidine",u:"g/L",cf:[0.500,1.00,2.00,5.00],max:200},
+ {sol:"une solution concentrée d'éosine",u:"g/L",cf:[1.00,2.00,5.00,10.0],max:200},
+ {sol:"une solution de sulfate de cuivre",u:"mol/L",cf:[0.0100,0.0200,0.0500,0.100],max:1},
+ {sol:"une solution d'acide chlorhydrique",u:"mol/L",cf:[0.0100,0.0200,0.0500,0.100],max:10},
+ {sol:"une solution d'hydroxyde de sodium",u:"mol/L",cf:[0.0100,0.0500,0.100],max:5},
+ {sol:"un bain de bouche concentré",u:"g/L",cf:[0.500,1.00,2.00],max:100},
+ {sol:"une solution de chlorure de sodium",u:"g/L",cf:[1.00,2.00,4.50,9.00],max:300}
+];
+const sVf = v => v>=1000?4:3;
+const vF = v => fs(v,sVf(v));
+function dcase(noLitre){
+  let c,d,Cf,Cm;do{c=pick(COMBOS);d=pick(DIL);Cf=pick(d.cf);Cm=+(Cf*c.F).toPrecision(6)}while(Cm>d.max||(noLitre&&c.Vf>=1000));
+  return {...c,d,Cf,Cm,act:pick(ACT)};
+}
+const G4={
+ F(){
+  const k=dcase();
+  return {type:"num",ctx:`${k.act} dispose ${deS(k.d.sol)} de concentration ${Cme} = ${fs(k.Cm,3)} ${k.d.u}. Il faut préparer une solution fille de concentration ${Cfi} = ${fs(k.Cf,3)} ${k.d.u}.`,
+   ask:"Calculer le facteur de dilution F.",unit:"(sans unité)",ans:k.F,noSig:true,show:String(k.F),rel:0.02,
+   traps:[[1/k.F,`F = ${Cme} / ${Cfi} : on divise la plus grande concentration par la plus petite, F est toujours plus grand que 1.`]],
+   corr:`<span class="l">F = ${Cme} / ${Cfi} = ${fs(k.Cm,3)} / ${fs(k.Cf,3)}</span><span class="l">F = <b>${k.F}</b> (la solution est diluée ${k.F} fois)</span>`};
+ },
+ VmF(){
+  const k=dcase(true);
+  return {type:"num",ctx:`À partir ${deS(k.d.sol)}, on veut préparer ${Vfi} = ${vF(k.Vf)} mL d'une solution diluée ${k.F} fois (facteur de dilution F = ${k.F}).`,
+   ask:`Calculer le volume ${Vme} de solution mère à prélever.`,unit:"mL",ans:k.Vm,sig:3,rel:0.02,
+   traps:[[k.Vf*k.F,`Le volume prélevé est plus petit que le volume de la solution fille : ${Vme} = ${Vfi} / F.`]],
+   corr:`<span class="l">${Vme} = ${Vfi} / F = ${vF(k.Vf)} / ${k.F}</span><span class="l">${Vme} = <b>${fs(k.Vm,3)} mL</b></span>`+csNote(3),
+   method:[`Repérer ${Vfi} et F.`,`Appliquer ${Vme} = ${Vfi} / F.`,`${Vme} est dans la même unité que ${Vfi} (ici en mL).`]};
+ },
+ Vm(){
+  const k=dcase();
+  return {type:"num",ctx:`${k.act} doit préparer ${Vfi} = ${vF(k.Vf)} mL de solution de concentration ${Cfi} = ${fs(k.Cf,3)} ${k.d.u} à partir ${deS(k.d.sol)} de concentration ${Cme} = ${fs(k.Cm,3)} ${k.d.u}.`,
+   ask:`Calculer le facteur de dilution F, puis le volume ${Vme} de solution mère à prélever.`,unit:"mL",ans:k.Vm,sig:3,rel:0.02,
+   traps:[[k.Vf*k.F,`Le volume prélevé est plus petit que ${Vfi} : on divise ${Vfi} par F.`],[k.F,`${k.F} est le facteur de dilution. Il reste à calculer ${Vme} = ${Vfi} / F.`]],
+   corr:`<span class="l">F = ${Cme} / ${Cfi} = ${fs(k.Cm,3)} / ${fs(k.Cf,3)} = ${k.F}</span><span class="l">${Vme} = ${Vfi} / F = ${vF(k.Vf)} / ${k.F} = <b>${fs(k.Vm,3)} mL</b></span>`+csNote(3)};
+ },
+ Cf(){
+  const k=dcase();
+  return {type:"num",ctx:`On dilue ${k.F} fois ${k.d.sol} de concentration ${Cme} = ${fs(k.Cm,3)} ${k.d.u}.`,
+   ask:`Calculer la concentration ${Cfi} de la solution obtenue.`,unit:k.d.u,ans:k.Cf,sig:3,rel:0.02,
+   traps:[[k.Cm*k.F,`Diluer fait diminuer la concentration : ${Cfi} = ${Cme} / F.`]],
+   corr:`<span class="l">F = ${Cme} / ${Cfi} donc ${Cfi} = ${Cme} / F = ${fs(k.Cm,3)} / ${k.F}</span><span class="l">${Cfi} = <b>${fs(k.Cf,3)} ${k.d.u}</b></span>`+csNote(3),
+   method:["Diluer F fois, c'est diviser la concentration par F.",`Appliquer ${Cfi} = ${Cme} / F.`]};
+ },
+ pip(){
+  const k=dcase();
+  const q=qcm([`une pipette jaugée de ${k.Vm} mL`,`un bécher de ${k.Vm<=50?100:250} mL`,`une éprouvette graduée de 100 mL`,`une fiole jaugée de ${k.Vf} mL`],0);
+  return {...q,ctx:`Pour préparer une solution fille, il faut prélever précisément ${Vme} = ${fs(k.Vm,3)} mL ${deS(k.d.sol)}.`,
+   ask:"Quelle verrerie faut-il utiliser pour ce prélèvement ?",
+   corr:`<span class="l">Pour prélever un volume précis, on utilise <b>une pipette jaugée de ${k.Vm} mL</b> (avec une propipette). Le bécher et l'éprouvette ne sont pas assez précis.</span>`};
+ },
+ fiole(){
+  const k=dcase();
+  const q=qcm([`une fiole jaugée de ${k.Vf} mL`,`un bécher de ${k.Vf} mL`,`une éprouvette graduée de ${k.Vf} mL`,`une pipette jaugée de ${k.Vm} mL`],0);
+  return {...q,ctx:`On verse ${Vme} = ${fs(k.Vm,3)} mL de solution mère, puis on complète avec de l'eau distillée pour obtenir ${Vfi} = ${vF(k.Vf)} mL de solution fille.`,
+   ask:"Dans quelle verrerie prépare-t-on la solution fille ?",
+   corr:`<span class="l">On prépare la solution fille dans <b>une fiole jaugée de ${k.Vf} mL</b>, remplie jusqu'au trait de jauge.</span>`};
+ }
+};
+
+/* ================== Mission 5 : dissolution ================== */
+const DIS=[
+ {sol:"du sérum physiologique",sol2:"chlorure de sodium",cm:[[9.0,2]]},
+ {sol:"un soluté glucosé",sol2:"glucose",cm:[[50.0,3],[100,3]]},
+ {sol:"une solution de bicarbonate de sodium pour bain de bouche",sol2:"hydrogénocarbonate de sodium",cm:[[14,2],[10.0,3]]},
+ {sol:"une solution de vitamine C",sol2:"acide ascorbique",cm:[[2.00,3],[5.0,2]]},
+ {sol:"une solution de sulfate de cuivre",sol2:"sulfate de cuivre",cm:[[25.0,3],[16,2]]},
+ {sol:"une solution sucrée",sol2:"saccharose",cm:[[20.0,3],[40,2],[100,3]]},
+ {sol:"une solution antiseptique de permanganate de potassium",sol2:"permanganate de potassium",cm:[[0.10,2],[0.200,3]]},
+ {sol:"une solution de chlorure de potassium",sol2:"chlorure de potassium",cm:[[7.5,2],[15.0,3]]}
+];
+const VML=[[50.0,3],[100,3],[200,3],[250,3],[500,3],[1000,4]], VL=[[0.500,3],[1.0,2],[1.50,3],[2.00,3]];
+const G5={
+ L(){
+  const d=pick(DIS),[c,sc]=pick(d.cm),[V,sv]=pick(VL),a=pick(ACT);const sig=Math.min(sc,sv);
+  return {type:"num",ctx:`${a} doit préparer V = ${fs(V,sv)} L ${deS(d.sol)} de concentration massique en ${d.sol2} ${Cmass} = ${fs(c,sc)} g/L.`,
+   ask:`Calculer la masse m ${dP(d.sol2)} à peser.`,unit:"g",ans:c*V,sig,rel:0.02,
+   traps:[[c/V,`m = ${Cmass} × V : il faut multiplier.`],[V/c,`m = ${Cmass} × V : il faut multiplier.`]],
+   corr:`<span class="l">m = ${Cmass} × V = ${fs(c,sc)} × ${fs(V,sv)}</span><span class="l">m = <b>${fs(c*V,sig)} g</b></span>`+csNote(sig)};
+ },
+ mL(){
+  const d=pick(DIS),[c,sc]=pick(d.cm),[Vm,sv]=pick(VML),V=Vm/1000,a=pick(ACT);const sig=Math.min(sc,sv);
+  return {type:"num",ctx:`${a} doit préparer V = ${fs(Vm,sv)} mL ${deS(d.sol)} de concentration massique en ${d.sol2} ${Cmass} = ${fs(c,sc)} g/L.`,
+   ask:`Calculer la masse m ${dP(d.sol2)} à peser.`,unit:"g",ans:c*V,sig,rel:0.02,
+   traps:[[c*Vm,`Convertis d'abord le volume en litres : ${fs(Vm,sv)} mL = ${fs(V,sv)} L.`],[c/V,`m = ${Cmass} × V : il faut multiplier.`]],
+   corr:`<span class="l">Conversion : V = ${fs(Vm,sv)} mL = ${fs(V,sv)} L</span><span class="l">m = ${Cmass} × V = ${fs(c,sc)} × ${fs(V,sv)}</span><span class="l">m = <b>${fs(c*V,sig)} g</b></span>`+csNote(sig)};
+ },
+ conv(){
+  const [Vm,s]=pick([[20,2],[50,2],[125,3],[150,3],[200,3],[250,3],[500,3],[750,3]]);const V=Vm/1000;
+  const q=qcm([`${fs(V,s)} L`,`${fs(V*10,s)} L`,`${fs(V*100,s)} L`,`${fs(V/10,s)} L`],0);
+  return {...q,ctx:"Pour utiliser la relation m = C<sub>m</sub> × V, le volume doit être exprimé en litres.",ask:`V = ${Vm} mL correspond à :`,
+   corr:`<span class="l">1 L = 1 000 mL, donc on divise par 1 000 : ${Vm} mL = <b>${fs(V,s)} L</b>.</span>`,method:["1 L = 1 000 mL.","Pour passer des mL aux L, on divise par 1 000 (on décale la virgule de 3 rangs vers la gauche)."]};
+ },
+ mat(){
+  const d=pick(DIS),Vm=pick([100,200,250,500]);
+  const q=qcm([`une balance pour peser le solide, puis une fiole jaugée de ${Vm} mL`,`une éprouvette graduée pour mesurer le solide, puis un bécher de ${Vm} mL`,`une balance pour peser le solide, puis une pipette jaugée de ${Vm} mL`,`un bécher pour mesurer le solide, puis une fiole jaugée de ${Vm} mL`],0);
+  return {...q,ctx:`On prépare V = ${Vm} mL ${deS(d.sol)} par dissolution ${dP(d.sol2)} solide dans de l'eau distillée.`,
+   ask:"Quel matériel utilise-t-on ?",
+   corr:`<span class="l">On pèse le solide avec <b>une balance</b> (dans une coupelle), puis on le dissout dans <b>une fiole jaugée de ${Vm} mL</b> que l'on complète jusqu'au trait de jauge.</span>`};
+ },
+ formula(){
+  if(Math.random()<.5){const q=qcm([`m = ${Cmass} × V`,`m = ${Cmass} / V`,`m = V / ${Cmass}`,`m = ${Cmass} + V`],0);
+   return {...q,ctx:"On veut préparer un volume V de solution de concentration massique C<sub>m</sub>.",ask:"Quelle relation donne la masse m de soluté à peser ?",
+    corr:`<span class="l">${Cmass} = m / V, donc <b>m = ${Cmass} × V</b>.</span>`};}
+  const q=qcm(["C<sub>m</sub> en g/L, V en L, m en g","C<sub>m</sub> en g/mol, V en mL, m en g","C<sub>m</sub> en mol/L, V en L, m en mol","C<sub>m</sub> en g/L, V en mL, m en kg"],0);
+  return {...q,ctx:`On utilise la relation m = ${Cmass} × V.`,ask:"Quelles sont les unités à utiliser ?",corr:`<span class="l"><b>${Cmass} en g/L, V en L, m en g</b> : g/L × L = g.</span>`};
+ },
+ Cm(){
+  const d=pick(DIS),[c]=pick(d.cm),[Vm,sv]=pick(VML),V=Vm/1000,m=+(c*V).toPrecision(3);const sig=Math.min(3,sv);
+  return {type:"num",ctx:`On dissout m = ${fs(m,3)} g ${dP(d.sol2)} dans de l'eau distillée pour obtenir V = ${fs(Vm,sv)} mL de solution.`,
+   ask:`Calculer la concentration massique ${Cmass} de la solution.`,unit:"g/L",ans:m/V,sig,rel:0.02,
+   traps:[[m/Vm,`Convertis d'abord le volume en litres : ${fs(Vm,sv)} mL = ${fs(V,sv)} L.`],[m*V,`${Cmass} = m / V : on divise la masse par le volume.`]],
+   corr:`<span class="l">V = ${fs(Vm,sv)} mL = ${fs(V,sv)} L</span><span class="l">${Cmass} = m / V = ${fs(m,3)} / ${fs(V,sv)} = <b>${fs(m/V,sig)} g/L</b></span>`+csNote(sig),
+   method:["Convertir le volume en litres.",`Appliquer ${Cmass} = m / V.`,"Écrire le résultat en g/L."]};
+ }
+};
+
+/* ================== Mission 6 : concentration molaire ================== */
+const cmol="c";
+const C6_SOL=[ // soluté, nom de solution
+ ["glucose","un soluté glucosé"],["chlorure de sodium","une solution de chlorure de sodium"],["urée","une solution d'urée"],
+ ["acide ascorbique","une solution de vitamine C"],["hydroxyde de sodium","une solution d'hydroxyde de sodium"],
+ ["hydrogénocarbonate de sodium","une solution de bicarbonate de sodium"],["paracétamol","une solution buvable de paracétamol"],
+ ["acide éthanoïque","une solution d'acide éthanoïque"],["peroxyde d'hydrogène","une eau oxygénée"],["acide lactique","une solution d'acide lactique"]
+];
+const N6=[[0.0250,3],[0.0100,3],[0.050,2],[0.10,2],[0.200,3],[0.0050,2],[0.150,3],[0.0300,3]];
+const V6=[[50.0,3,"mL"],[100,3,"mL"],[200,3,"mL"],[250,3,"mL"],[500,3,"mL"],[0.500,3,"L"],[1.00,3,"L"],[2.0,2,"L"]];
+const CM2C=[ // [soluté, contexte, Cm, sig]
+ ["chlorure de sodium","Le sérum physiologique contient du chlorure de sodium à la concentration massique",9.0,2],
+ ["glucose","Un soluté glucosé à 5 % contient du glucose à la concentration massique",50.0,3],
+ ["glucose","La glycémie d'un patient à jeun correspond à une concentration massique en glucose dans le sang",1.00,3],
+ ["urée","L'analyse de sang d'un patient indique une concentration massique en urée",0.30,2],
+ ["hydrogénocarbonate de sodium","Une solution de bicarbonate pour bain de bouche contient de l'hydrogénocarbonate de sodium à la concentration massique",14,2],
+ ["acide ascorbique","Une boisson enrichie contient de l'acide ascorbique (vitamine C) à la concentration massique",0.500,3],
+ ["acide éthanoïque","Un vinaigre ménager contient de l'acide éthanoïque à la concentration massique",60.0,3],
+ ["hydroxyde de sodium","Un déboucheur de canalisations dilué contient de l'hydroxyde de sodium à la concentration massique",40,2]
+];
+const C2CM=[ // [soluté, contexte, c, sig]
+ ["hydroxyde de sodium","Au laboratoire, une solution d'hydroxyde de sodium a une concentration molaire",0.100,3],
+ ["glucose","Un soluté glucosé a une concentration molaire en glucose",0.278,3],
+ ["chlorure de sodium","Le sérum physiologique a une concentration molaire en chlorure de sodium",0.154,3],
+ ["urée","Le sang d'un patient a une concentration molaire en urée",5.0e-3,2],
+ ["acide lactique","Après un effort intense, le sang d'un sportif a une concentration molaire en acide lactique",8.0e-3,2],
+ ["peroxyde d'hydrogène","Une eau oxygénée antiseptique a une concentration molaire en peroxyde d'hydrogène",0.90,2],
+ ["acide éthanoïque","Une solution d'acide éthanoïque utilisée en TP a une concentration molaire",1.0,2],
+ ["paracétamol","Une solution buvable a une concentration molaire en paracétamol",0.165,3]
+];
+const G6={
+ formula(){
+  if(Math.random()<.5){const q=qcm(["c = n / V","c = n × V","c = V / n","c = m / V"],0);
+   return {...q,ctx:"On dissout une quantité de matière n de soluté pour obtenir un volume V de solution.",ask:"Quelle relation définit la concentration molaire c du soluté ?",
+    corr:`<span class="l"><b>c = n / V</b> avec n en mol, V en L et c en mol/L. La relation m / V donne la concentration massique ${Cmass}.</span>`};}
+  const q=qcm([`${Cmass} = c × M`,`${Cmass} = c / M`,`${Cmass} = M / c`,`${Cmass} = c + M`],0);
+  return {...q,ctx:`On connaît la concentration molaire c d'un soluté (en mol/L) et sa masse molaire M (en g/mol).`,ask:`Quelle relation permet de calculer sa concentration massique ${Cmass} (en g/L) ?`,
+   corr:`<span class="l"><b>${Cmass} = c × M</b> : mol/L × g/mol = g/L. Inversement, c = ${Cmass} / M.</span>`};
+ },
+ c(){
+  const [sol,nom]=pick(C6_SOL);const [n,sn]=pick(N6);const [v,sv,u]=pick(V6);const V=u==="mL"?v/1000:v;const sig=Math.min(sn,sv);
+  return {type:"num",ctx:`On dissout n = ${fs(n,sn)} mol ${dP(sol)} dans de l'eau distillée pour obtenir V = ${fs(v,sv)} ${u} de solution.`,
+   ask:`Calculer la concentration molaire c en ${sol} de cette solution.`,tag:sol,unit:"mol/L",ans:n/V,sig,rel:0.025,
+   traps:[[n/v,u==="mL"?`Convertis d'abord le volume en litres : ${fs(v,sv)} mL = ${fs(V,sv)} L.`:"c = n / V : on divise la quantité de matière par le volume."],[n*V,"c = n / V : on divise la quantité de matière par le volume."],[V/n,"Tu as inversé la division : c = n / V."]],
+   corr:(u==="mL"?`<span class="l">Conversion : V = ${fs(v,sv)} mL = ${fs(V,sv)} L</span>`:"")+`<span class="l">c = n / V = ${fs(n,sn)} / ${fs(V,sv)}</span><span class="l">c = <b>${fs(n/V,sig)} mol/L</b></span>`+csNote(sig),
+   method:["Vérifier que n est en mol.","Convertir le volume V en litres si besoin (1 L = 1 000 mL).","Appliquer c = n / V.","Écrire le résultat en mol/L."]};
+ },
+ nV(){
+  const [sol,c,sc]=pick([["glucose",0.278,3],["chlorure de sodium",0.154,3],["hydroxyde de sodium",0.100,3],["urée",0.050,2],["acide ascorbique",0.0200,3],["peroxyde d'hydrogène",0.90,2],["hydrogénocarbonate de sodium",0.167,3]]);
+  const [v,sv]=pick([[50.0,3],[100,3],[125,3],[250,3],[500,3]]);const V=v/1000;const sig=Math.min(sc,sv);
+  const ctx=sol==="glucose"||sol==="chlorure de sodium"?`Une poche de perfusion contient V = ${fs(v,sv)} mL de solution de ${sol} de concentration molaire c = ${fs(c,sc)} mol/L.`:`Un flacon contient V = ${fs(v,sv)} mL de solution ${dP(sol)} de concentration molaire c = ${fs(c,sc)} mol/L.`;
+  return {type:"num",ctx,ask:`Calculer la quantité de matière n ${dP(sol)} contenue dans ce volume.`,tag:sol,unit:"mol",ans:c*V,sig,rel:0.025,
+   traps:[[c*v,`Convertis d'abord le volume en litres : ${fs(v,sv)} mL = ${fs(V,sv)} L.`],[c/V,"n = c × V : on multiplie la concentration par le volume."],[V/c,"n = c × V : on multiplie la concentration par le volume."]],
+   corr:`<span class="l">Conversion : V = ${fs(v,sv)} mL = ${fs(V,sv)} L</span><span class="l">n = c × V = ${fs(c,sc)} × ${fs(V,sv)}</span><span class="l">n = <b>${fs(c*V,sig)} mol</b></span>`+csNote(sig),
+   method:["Convertir le volume V en litres (1 L = 1 000 mL).","Appliquer n = c × V.","Écrire le résultat en mol."]};
+ },
+ Cm2c(){
+  const [sol,txt,Cm,sc]=pick(CM2C);const mo=molByName(sol);const M=molarM(mo.f);const sig=Math.min(sc,sM(M));
+  return {type:"num",ctx:`${txt} ${Cmass} = ${fs(Cm,sc)} g/L.`,data:`Masse molaire ${mo.de} (${fH(mo.f)}) : M = ${f1(M)} g/mol.`,
+   ask:`Calculer la concentration molaire c ${dP(sol)}.`,tag:sol,unit:"mol/L",ans:Cm/M,sig,rel:0.025,
+   traps:[[Cm*M,`Tu as multiplié. Pour passer de ${Cmass} à c, on divise : c = ${Cmass} / M.`],[M/Cm,`Tu as inversé la division : c = ${Cmass} / M.`]],
+   corr:`<span class="l">${Cmass} = c × M donc c = ${Cmass} / M</span><span class="l">c = ${fs(Cm,sc)} / ${f1(M)}</span><span class="l">c = <b>${fs(Cm/M,sig)} mol/L</b></span>`+csNote(sig),
+   method:[`Repérer ${Cmass} en g/L et M en g/mol.`,`Appliquer c = ${Cmass} / M.`,"Écrire le résultat en mol/L."]};
+ },
+ c2Cm(){
+  const [sol,txt,c,sc]=pick(C2CM);const mo=molByName(sol);const M=molarM(mo.f);const sig=Math.min(sc,sM(M));
+  return {type:"num",ctx:`${txt} c = ${fs(c,sc)} mol/L.`,data:`Masse molaire ${mo.de} (${fH(mo.f)}) : M = ${f1(M)} g/mol.`,
+   ask:`Calculer la concentration massique ${Cmass} ${dP(sol)}.`,tag:sol,unit:"g/L",ans:c*M,sig,rel:0.025,
+   traps:[[c/M,`Pour passer de c à ${Cmass}, on multiplie : ${Cmass} = c × M.`],[M/c,`Pour passer de c à ${Cmass}, on multiplie : ${Cmass} = c × M.`]],
+   corr:`<span class="l">${Cmass} = c × M = ${fs(c,sc)} × ${f1(M)}</span><span class="l">${Cmass} = <b>${fs(c*M,sig)} g/L</b></span>`+csNote(sig),
+   method:["Repérer c en mol/L et M en g/mol.",`Appliquer ${Cmass} = c × M.`,"Écrire le résultat en g/L."]};
+ }
+};
+
+/* ================== Missions ================== */
+const MISSIONS=[
+ {t:"Peser les atomes",obj:"Calculer une masse molaire M en g/mol à partir des masses molaires atomiques.",G:G1,
+  plan:["count","sens","M","M"],ordered:true,pass:3,
+  retenir:`<p>La masse molaire moléculaire M est la somme des masses molaires atomiques de tous les atomes de la molécule.</p><span class="formule">M(C<sub>x</sub>H<sub>y</sub>O<sub>z</sub>) = x × M(C) + y × M(H) + z × M(O)</span><p>Unité : g/mol. Pas de chiffre en indice = 1 atome.</p>`,
+  method:["Repérer dans la formule chaque élément et son nombre d'atomes (chiffre en indice ; pas de chiffre = 1 atome).","Multiplier le nombre d'atomes de chaque élément par sa masse molaire atomique M(X).","Additionner tous les résultats.","Écrire le résultat avec son unité : g/mol."]},
+ {t:"De la masse aux moles",obj:"Passer d'une masse m à une quantité de matière n avec n = m / M.",G:G2,
+  plan:["formula","N","N","mg","Natoms"],ordered:true,
+  retenir:`<span class="formule">n = m / M</span><p>n : quantité de matière en mol<br>m : masse en g<br>M : masse molaire en g/mol</p><p>1 g = 1 000 mg</p>`,
+  method:["Repérer la masse m et vérifier qu'elle est en grammes (1 g = 1 000 mg).","Repérer (ou calculer) la masse molaire M en g/mol.","Appliquer n = m / M.","Écrire le résultat avec son unité : mol."]},
+ {t:"Des moles à la masse",obj:"Passer d'une quantité de matière n à une masse m avec m = n × M.",G:G3,
+  plan:["formula","m","m","mmol","matoms"],ordered:true,
+  retenir:`<span class="formule">m = n × M</span><p>m : masse en g<br>n : quantité de matière en mol<br>M : masse molaire en g/mol</p><p>1 mol = 1 000 mmol</p>`,
+  method:["Repérer la quantité de matière n et vérifier qu'elle est en mol (1 mol = 1 000 mmol).","Repérer (ou calculer) la masse molaire M en g/mol.","Appliquer m = n × M.","Écrire le résultat avec son unité : g."]},
+ {t:"Diluer une solution",obj:`Calculer le volume ${Vme} à prélever grâce au facteur de dilution F.`,G:G4,
+  plan:["pip","F","VmF","Vm","Vm"],ordered:true,
+  retenir:`<span class="formule">F = ${Cme} / ${Cfi}</span><span class="formule">${Vme} = ${Vfi} / F</span><p>F n'a pas d'unité et il est toujours plus grand que 1.</p><p>On prélève ${Vme} avec une pipette jaugée et on prépare la solution fille dans une fiole jaugée de volume ${Vfi}.</p>`,
+  method:[`Repérer ${Cme}, ${Cfi} et ${Vfi}.`,`Calculer le facteur de dilution F = ${Cme} / ${Cfi}.`,`Calculer le volume à prélever ${Vme} = ${Vfi} / F.`,`${Vme} a la même unité que ${Vfi}.`]},
+ {t:"Dissoudre un solide",obj:`Calculer la masse à peser avec m = ${Cmass} × V.`,G:G5,
+  plan:["formula","conv","L","mL","mL"],ordered:true,
+  retenir:`<span class="formule">m = ${Cmass} × V</span><p>m : masse à peser en g<br>${Cmass} : concentration massique en g/L<br>V : volume de solution en L</p><p>1 L = 1 000 mL</p>`,
+  method:[`Repérer la concentration massique ${Cmass} en g/L.`,"Convertir le volume V en litres (1 L = 1 000 mL).",`Appliquer m = ${Cmass} × V.`,"Écrire le résultat avec son unité : g."]},
+ {t:"Concentration molaire",obj:`Calculer une concentration molaire c = n / V et passer de la concentration massique ${Cmass} à c.`,G:G6,
+  plan:["formula","c","nV","Cm2c","c2Cm"],ordered:true,
+  retenir:`<span class="formule">c = n / V</span><p>c : concentration molaire en mol/L<br>n : quantité de matière en mol<br>V : volume de solution en L</p><span class="formule">${Cmass} = c × M</span><span class="formule">c = ${Cmass} / M</span><p>${Cmass} : concentration massique en g/L<br>M : masse molaire en g/mol</p>`,
+  method:["Repérer les données et leurs unités.",`Choisir la bonne relation : c = n / V ou ${Cmass} = c × M.`,"Faire le calcul.","Écrire le résultat avec son unité."]}
+];
+
+/* ================== Banque fixe de 100 questions ==================
+   (fabriquée une fois avec les générateurs ci-dessus ; liste complète dans banque_100_questions_labo_preparations.txt) */
+const BANK=[{"mission":0,"slot":"count","type":"qcm","choices":["13","14","33","12"],"correct":0,"ctx":"<b>Ibuprofène</b> : médicament anti-inflammatoire. Sa formule brute est C<sub>13</sub>H<sub>18</sub>O<sub>2</sub>.","ask":"Combien d'atomes de carbone contient une molécule d'ibuprofène ?","corr":"<span class=\"l\">Dans C<sub>13</sub>H<sub>18</sub>O<sub>2</sub>, le chiffre écrit en indice après le symbole C est 13 : la molécule contient <b>13 atomes de carbone</b>.</span>","method":["Repérer le symbole de l'élément dans la formule.","Lire le chiffre écrit en indice juste après ce symbole.","S'il n'y a pas de chiffre, il y a 1 seul atome."],"id":"Q001"},{"mission":0,"slot":"count","type":"qcm","choices":["9","20","7","8"],"correct":3,"ctx":"<b>Paracétamol</b> : médicament contre la douleur et la fièvre. Sa formule brute est C<sub>8</sub>H<sub>9</sub>NO<sub>2</sub>.","ask":"Combien d'atomes de carbone contient une molécule de paracétamol ?","corr":"<span class=\"l\">Dans C<sub>8</sub>H<sub>9</sub>NO<sub>2</sub>, le chiffre écrit en indice après le symbole C est 8 : la molécule contient <b>8 atomes de carbone</b>.</span>","method":["Repérer le symbole de l'élément dans la formule.","Lire le chiffre écrit en indice juste après ce symbole.","S'il n'y a pas de chiffre, il y a 1 seul atome."],"id":"Q002"},{"mission":0,"slot":"count","type":"qcm","choices":["2","4","3","14"],"correct":2,"ctx":"<b>Glycérol</b> : présent dans les crèmes hydratantes. Sa formule brute est C<sub>3</sub>H<sub>8</sub>O<sub>3</sub>.","ask":"Combien d'atomes d'oxygène contient une molécule de glycérol ?","corr":"<span class=\"l\">Dans C<sub>3</sub>H<sub>8</sub>O<sub>3</sub>, le chiffre écrit en indice après le symbole O est 3 : la molécule contient <b>3 atomes d'oxygène</b>.</span>","method":["Repérer le symbole de l'élément dans la formule.","Lire le chiffre écrit en indice juste après ce symbole.","S'il n'y a pas de chiffre, il y a 1 seul atome."],"id":"Q003"},{"mission":0,"slot":"count","type":"qcm","choices":["11","12","13","24"],"correct":1,"ctx":"<b>Glucose</b> : sucre transporté par le sang. Sa formule brute est C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>.","ask":"Combien d'atomes d'hydrogène contient une molécule de glucose ?","corr":"<span class=\"l\">Dans C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>, le chiffre écrit en indice après le symbole H est 12 : la molécule contient <b>12 atomes d'hydrogène</b>.</span>","method":["Repérer le symbole de l'élément dans la formule.","Lire le chiffre écrit en indice juste après ce symbole.","S'il n'y a pas de chiffre, il y a 1 seul atome."],"id":"Q004"},{"mission":0,"slot":"sens","type":"qcm","choices":["mol/L","g/mol","g/L","g"],"correct":1,"ctx":"La masse molaire M d'une molécule est la masse d'une mole de ces molécules.","ask":"Quelle est l'unité de la masse molaire M ?","corr":"<span class=\"l\">Une masse (en g) pour une mole : la masse molaire s'exprime en <b>g/mol</b>. Le g/L est l'unité de la concentration massique.</span>","method":["La masse molaire est une masse divisée par une quantité de matière.","Masse en g, quantité de matière en mol."],"id":"Q005"},{"mission":0,"slot":"sens","type":"qcm","choices":["un litre d'hydrogène a une masse de 1,0 g","une mole d'atomes d'hydrogène a une masse de 1,0 g","un seul atome d'hydrogène a une masse de 1,0 g","1,0 g d'hydrogène contient 1 atome"],"correct":1,"ctx":"On lit dans les données : M(H) = 1,0 g/mol.","ask":"Cette valeur signifie que :","corr":"<span class=\"l\">La masse molaire est la masse d'<b>une mole</b> d'entités : une mole d'atomes d'hydrogène a une masse de 1,0 g. Un seul atome est beaucoup trop léger pour être pesé.</span>","method":["La masse molaire est la masse d'une mole (et non d'un seul atome).","Son unité g/mol se lit « grammes par mole »."],"id":"Q006"},{"mission":0,"slot":"sens","type":"qcm","choices":["16,0 g d'oxygène contiennent 16 atomes","une mole d'atomes d'oxygène a une masse de 16,0 g","un seul atome d'oxygène a une masse de 16,0 g","un litre d'oxygène a une masse de 16,0 g"],"correct":1,"ctx":"On lit dans les données : M(O) = 16,0 g/mol.","ask":"Cette valeur signifie que :","corr":"<span class=\"l\">La masse molaire est la masse d'<b>une mole</b> d'entités : une mole d'atomes d'oxygène a une masse de 16,0 g. Un seul atome est beaucoup trop léger pour être pesé.</span>","method":["La masse molaire est la masse d'une mole (et non d'un seul atome).","Son unité g/mol se lit « grammes par mole »."],"id":"Q007"},{"mission":0,"slot":"sens","type":"qcm","choices":["12,0 g de carbone contiennent 12 atomes","une mole d'atomes de carbone a une masse de 12,0 g","un seul atome de carbone a une masse de 12,0 g","un litre de carbone a une masse de 12,0 g"],"correct":1,"ctx":"On lit dans les données : M(C) = 12,0 g/mol.","ask":"Cette valeur signifie que :","corr":"<span class=\"l\">La masse molaire est la masse d'<b>une mole</b> d'entités : une mole d'atomes de carbone a une masse de 12,0 g. Un seul atome est beaucoup trop léger pour être pesé.</span>","method":["La masse molaire est la masse d'une mole (et non d'un seul atome).","Son unité g/mol se lit « grammes par mole »."],"id":"Q008"},{"mission":0,"slot":"sens","type":"qcm","choices":["un seul atome d'azote a une masse de 14,0 g","un litre d'azote a une masse de 14,0 g","14,0 g d'azote contiennent 14 atomes","une mole d'atomes d'azote a une masse de 14,0 g"],"correct":3,"ctx":"On lit dans les données : M(N) = 14,0 g/mol.","ask":"Cette valeur signifie que :","corr":"<span class=\"l\">La masse molaire est la masse d'<b>une mole</b> d'entités : une mole d'atomes d'azote a une masse de 14,0 g. Un seul atome est beaucoup trop léger pour être pesé.</span>","method":["La masse molaire est la masse d'une mole (et non d'un seul atome).","Son unité g/mol se lit « grammes par mole »."],"id":"Q009"},{"mission":0,"slot":"M","type":"num","ctx":"<b>Peroxyde d'hydrogène</b> : eau oxygénée, antiseptique. Sa formule brute est H<sub>2</sub>O<sub>2</sub>.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(O) = 16,0 g/mol.","ask":"Calculer la masse molaire moléculaire M du peroxyde d'hydrogène.","unit":"g/mol","ans":34,"noSig":true,"show":"34,0","rel":0.012,"traps":[[17,"Tu as additionné les masses molaires atomiques sans les multiplier par le nombre d'atomes de chaque élément."]],"corr":"<span class=\"l\">M(H<sub>2</sub>O<sub>2</sub>) = 2 × M(H) + 2 × M(O)</span><span class=\"l\">M(H<sub>2</sub>O<sub>2</sub>) = 2 × 1,0 + 2 × 16,0 = <b>34,0 g/mol</b></span>","id":"Q010"},{"mission":0,"slot":"M","type":"num","ctx":"<b>Aspirine</b> : médicament anti-inflammatoire. Sa formule brute est C<sub>9</sub>H<sub>8</sub>O<sub>4</sub>.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(O) = 16,0 g/mol.","ask":"Calculer la masse molaire moléculaire M de l'aspirine.","unit":"g/mol","ans":180,"noSig":true,"show":"180,0","rel":0.012,"traps":[[29,"Tu as additionné les masses molaires atomiques sans les multiplier par le nombre d'atomes de chaque élément."]],"corr":"<span class=\"l\">M(C<sub>9</sub>H<sub>8</sub>O<sub>4</sub>) = 9 × M(C) + 8 × M(H) + 4 × M(O)</span><span class=\"l\">M(C<sub>9</sub>H<sub>8</sub>O<sub>4</sub>) = 9 × 12,0 + 8 × 1,0 + 4 × 16,0 = <b>180,0 g/mol</b></span>","id":"Q011"},{"mission":0,"slot":"M","type":"num","ctx":"<b>Dioxyde de carbone</b> : gaz rejeté lors de l'expiration. Sa formule brute est CO<sub>2</sub>.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(O) = 16,0 g/mol.","ask":"Calculer la masse molaire moléculaire M du dioxyde de carbone.","unit":"g/mol","ans":44,"noSig":true,"show":"44,0","rel":0.012,"traps":[[28,"Tu as additionné les masses molaires atomiques sans les multiplier par le nombre d'atomes de chaque élément."]],"corr":"<span class=\"l\">M(CO<sub>2</sub>) = M(C) + 2 × M(O)</span><span class=\"l\">M(CO<sub>2</sub>) = 12,0 + 2 × 16,0 = <b>44,0 g/mol</b></span>","id":"Q012"},{"mission":0,"slot":"M","type":"num","ctx":"<b>Saccharose</b> : sucre de table. Sa formule brute est C<sub>12</sub>H<sub>22</sub>O<sub>11</sub>.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(O) = 16,0 g/mol.","ask":"Calculer la masse molaire moléculaire M du saccharose.","unit":"g/mol","ans":342,"noSig":true,"show":"342,0","rel":0.012,"traps":[[29,"Tu as additionné les masses molaires atomiques sans les multiplier par le nombre d'atomes de chaque élément."]],"corr":"<span class=\"l\">M(C<sub>12</sub>H<sub>22</sub>O<sub>11</sub>) = 12 × M(C) + 22 × M(H) + 11 × M(O)</span><span class=\"l\">M(C<sub>12</sub>H<sub>22</sub>O<sub>11</sub>) = 12 × 12,0 + 22 × 1,0 + 11 × 16,0 = <b>342,0 g/mol</b></span>","id":"Q013"},{"mission":0,"slot":"M","type":"num","ctx":"<b>Hydroxyde de sodium</b> : soude des déboucheurs de canalisations. Sa formule brute est NaOH.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(O) = 16,0 g/mol ; M(Na) = 23,0 g/mol.","ask":"Calculer la masse molaire moléculaire M de l'hydroxyde de sodium.","unit":"g/mol","ans":40,"noSig":true,"show":"40,0","rel":0.012,"traps":[],"corr":"<span class=\"l\">M(NaOH) = M(Na) + M(O) + M(H)</span><span class=\"l\">M(NaOH) = 23,0 + 16,0 + 1,0 = <b>40,0 g/mol</b></span>","id":"Q014"},{"mission":0,"slot":"M","type":"num","ctx":"<b>Urée</b> : déchet azoté éliminé dans l'urine. Sa formule brute est CH<sub>4</sub>N<sub>2</sub>O.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(N) = 14,0 g/mol ; M(O) = 16,0 g/mol.","ask":"Calculer la masse molaire moléculaire M de l'urée.","unit":"g/mol","ans":60,"noSig":true,"show":"60,0","rel":0.012,"traps":[[43,"Tu as additionné les masses molaires atomiques sans les multiplier par le nombre d'atomes de chaque élément."]],"corr":"<span class=\"l\">M(CH<sub>4</sub>N<sub>2</sub>O) = M(C) + 4 × M(H) + 2 × M(N) + M(O)</span><span class=\"l\">M(CH<sub>4</sub>N<sub>2</sub>O) = 12,0 + 4 × 1,0 + 2 × 14,0 + 16,0 = <b>60,0 g/mol</b></span>","id":"Q015"},{"mission":0,"slot":"M","type":"num","ctx":"<b>Acide ascorbique</b> : vitamine C. Sa formule brute est C<sub>6</sub>H<sub>8</sub>O<sub>6</sub>.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(O) = 16,0 g/mol.","ask":"Calculer la masse molaire moléculaire M de l'acide ascorbique.","unit":"g/mol","ans":176,"noSig":true,"show":"176,0","rel":0.012,"traps":[[29,"Tu as additionné les masses molaires atomiques sans les multiplier par le nombre d'atomes de chaque élément."]],"corr":"<span class=\"l\">M(C<sub>6</sub>H<sub>8</sub>O<sub>6</sub>) = 6 × M(C) + 8 × M(H) + 6 × M(O)</span><span class=\"l\">M(C<sub>6</sub>H<sub>8</sub>O<sub>6</sub>) = 6 × 12,0 + 8 × 1,0 + 6 × 16,0 = <b>176,0 g/mol</b></span>","id":"Q016"},{"mission":0,"slot":"M","type":"num","ctx":"<b>Acide lactique</b> : produit par les muscles pendant l'effort. Sa formule brute est C<sub>3</sub>H<sub>6</sub>O<sub>3</sub>.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(O) = 16,0 g/mol.","ask":"Calculer la masse molaire moléculaire M de l'acide lactique.","unit":"g/mol","ans":90,"noSig":true,"show":"90,0","rel":0.012,"traps":[[29,"Tu as additionné les masses molaires atomiques sans les multiplier par le nombre d'atomes de chaque élément."]],"corr":"<span class=\"l\">M(C<sub>3</sub>H<sub>6</sub>O<sub>3</sub>) = 3 × M(C) + 6 × M(H) + 3 × M(O)</span><span class=\"l\">M(C<sub>3</sub>H<sub>6</sub>O<sub>3</sub>) = 3 × 12,0 + 6 × 1,0 + 3 × 16,0 = <b>90,0 g/mol</b></span>","id":"Q017"},{"mission":0,"slot":"M","type":"num","ctx":"<b>Hydrogénocarbonate de sodium</b> : bicarbonate utilisé contre les brûlures d'estomac. Sa formule brute est NaHCO<sub>3</sub>.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(O) = 16,0 g/mol ; M(Na) = 23,0 g/mol.","ask":"Calculer la masse molaire moléculaire M de l'hydrogénocarbonate de sodium.","unit":"g/mol","ans":84,"noSig":true,"show":"84,0","rel":0.012,"traps":[[52,"Tu as additionné les masses molaires atomiques sans les multiplier par le nombre d'atomes de chaque élément."]],"corr":"<span class=\"l\">M(NaHCO<sub>3</sub>) = M(Na) + M(H) + M(C) + 3 × M(O)</span><span class=\"l\">M(NaHCO<sub>3</sub>) = 23,0 + 1,0 + 12,0 + 3 × 16,0 = <b>84,0 g/mol</b></span>","id":"Q018"},{"mission":0,"slot":"M","type":"num","ctx":"<b>Caféine</b> : stimulant présent dans le café. Sa formule brute est C<sub>8</sub>H<sub>10</sub>N<sub>4</sub>O<sub>2</sub>.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(N) = 14,0 g/mol ; M(O) = 16,0 g/mol.","ask":"Calculer la masse molaire moléculaire M de la caféine.","unit":"g/mol","ans":194,"noSig":true,"show":"194,0","rel":0.012,"traps":[[43,"Tu as additionné les masses molaires atomiques sans les multiplier par le nombre d'atomes de chaque élément."]],"corr":"<span class=\"l\">M(C<sub>8</sub>H<sub>10</sub>N<sub>4</sub>O<sub>2</sub>) = 8 × M(C) + 10 × M(H) + 4 × M(N) + 2 × M(O)</span><span class=\"l\">M(C<sub>8</sub>H<sub>10</sub>N<sub>4</sub>O<sub>2</sub>) = 8 × 12,0 + 10 × 1,0 + 4 × 14,0 + 2 × 16,0 = <b>194,0 g/mol</b></span>","id":"Q019"},{"mission":0,"slot":"M","type":"num","ctx":"<b>Ammoniac</b> : présent dans certains produits ménagers. Sa formule brute est NH<sub>3</sub>.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(N) = 14,0 g/mol ; M(O) = 16,0 g/mol.","ask":"Calculer la masse molaire moléculaire M de l'ammoniac.","unit":"g/mol","ans":17,"noSig":true,"show":"17,0","rel":0.012,"traps":[[15,"Tu as additionné les masses molaires atomiques sans les multiplier par le nombre d'atomes de chaque élément."]],"corr":"<span class=\"l\">M(NH<sub>3</sub>) = M(N) + 3 × M(H)</span><span class=\"l\">M(NH<sub>3</sub>) = 14,0 + 3 × 1,0 = <b>17,0 g/mol</b></span>","id":"Q020"},{"mission":1,"slot":"formula","type":"qcm","choices":["n en g, m en mol, M en g/mol","n en mol/L, m en g, M en g/L","n en mol, m en kg, M en mol/g","n en mol, m en g, M en g/mol"],"correct":3,"ctx":"On utilise la relation n = m / M.","ask":"Quelles sont les unités à utiliser ?","corr":"<span class=\"l\"><b>n en mol, m en g, M en g/mol</b> : g ÷ (g/mol) = mol.</span>","id":"Q021"},{"mission":1,"slot":"formula","type":"qcm","choices":["n = m + M","n = m × M","n = m / M","n = M / m"],"correct":2,"ctx":"On connaît la masse m d'un échantillon et la masse molaire M de l'espèce chimique.","ask":"Quelle relation permet de calculer la quantité de matière n ?","corr":"<span class=\"l\"><b>n = m / M</b> : plus la masse est grande, plus il y a de matière ; plus les molécules sont lourdes, moins il y en a.</span>","id":"Q022"},{"mission":1,"slot":"N","type":"num","ctx":"Au laboratoire, on pèse une masse m = 20,0 g d'acide lactique. Formule brute : C<sub>3</sub>H<sub>6</sub>O<sub>3</sub>.","data":"Masse molaire de l'acide lactique : M = 90,0 g/mol.","ask":"Calculer la quantité de matière n d'acide lactique contenue dans l'échantillon.","unit":"mol","ans":0.2222222222222222,"sig":3,"rel":0.025,"traps":[[1800,"Tu as multiplié. La relation est n = m / M : on divise la masse par la masse molaire."],[4.5,"Tu as inversé la division : n = m / M (la masse en haut, la masse molaire en bas)."]],"corr":"<span class=\"l\">n = m / M = 20,0 / 90,0</span><span class=\"l\">n = <b>0,222 mol</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q023"},{"mission":1,"slot":"N","type":"num","ctx":"Un flacon contient une masse m = 36 g d'éthanol. Formule brute : C<sub>2</sub>H<sub>6</sub>O.","data":"Masse molaire de l'éthanol : M = 46,0 g/mol.","ask":"Calculer la quantité de matière n d'éthanol contenue dans l'échantillon.","unit":"mol","ans":0.782608695652174,"sig":2,"rel":0.025,"traps":[[1656,"Tu as multiplié. La relation est n = m / M : on divise la masse par la masse molaire."],[1.2777777777777777,"Tu as inversé la division : n = m / M (la masse en haut, la masse molaire en bas)."]],"corr":"<span class=\"l\">n = m / M = 36 / 46,0</span><span class=\"l\">n = <b>0,78 mol</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q024"},{"mission":1,"slot":"N","type":"num","ctx":"On dispose d'un échantillon de masse m = 50 g de chlorure de sodium. Formule brute : NaCl.","data":"Masse molaire du chlorure de sodium : M = 58,5 g/mol.","ask":"Calculer la quantité de matière n de chlorure de sodium contenue dans l'échantillon.","unit":"mol","ans":0.8547008547008547,"sig":2,"rel":0.025,"traps":[[2925,"Tu as multiplié. La relation est n = m / M : on divise la masse par la masse molaire."],[1.17,"Tu as inversé la division : n = m / M (la masse en haut, la masse molaire en bas)."]],"corr":"<span class=\"l\">n = m / M = 50 / 58,5</span><span class=\"l\">n = <b>0,85 mol</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q025"},{"mission":1,"slot":"N","type":"num","ctx":"Une préparatrice pèse m = 36 g d'hydrogénocarbonate de sodium sur une balance. Formule brute : NaHCO<sub>3</sub>.","data":"Masse molaire de l'hydrogénocarbonate de sodium : M = 84,0 g/mol.","ask":"Calculer la quantité de matière n d'hydrogénocarbonate de sodium contenue dans l'échantillon.","unit":"mol","ans":0.42857142857142855,"sig":2,"rel":0.025,"traps":[[3024,"Tu as multiplié. La relation est n = m / M : on divise la masse par la masse molaire."],[2.3333333333333335,"Tu as inversé la division : n = m / M (la masse en haut, la masse molaire en bas)."]],"corr":"<span class=\"l\">n = m / M = 36 / 84,0</span><span class=\"l\">n = <b>0,43 mol</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q026"},{"mission":1,"slot":"N","type":"num","ctx":"Une préparatrice pèse m = 9,00 g de saccharose sur une balance. Formule brute : C<sub>12</sub>H<sub>22</sub>O<sub>11</sub>.","data":"Masse molaire du saccharose : M = 342,0 g/mol.","ask":"Calculer la quantité de matière n de saccharose contenue dans l'échantillon.","unit":"mol","ans":0.02631578947368421,"sig":3,"rel":0.025,"traps":[[3078,"Tu as multiplié. La relation est n = m / M : on divise la masse par la masse molaire."],[38,"Tu as inversé la division : n = m / M (la masse en haut, la masse molaire en bas)."]],"corr":"<span class=\"l\">n = m / M = 9,00 / 342,0</span><span class=\"l\">n = <b>0,0263 mol</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q027"},{"mission":1,"slot":"N","type":"num","ctx":"On dispose d'un échantillon de masse m = 9,00 g d'eau. Formule brute : H<sub>2</sub>O.","data":"Masse molaire de l'eau : M = 18,0 g/mol.","ask":"Calculer la quantité de matière n d'eau contenue dans l'échantillon.","unit":"mol","ans":0.5,"sig":3,"rel":0.025,"traps":[[162,"Tu as multiplié. La relation est n = m / M : on divise la masse par la masse molaire."],[2,"Tu as inversé la division : n = m / M (la masse en haut, la masse molaire en bas)."]],"corr":"<span class=\"l\">n = m / M = 9,00 / 18,0</span><span class=\"l\">n = <b>0,500 mol</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q028"},{"mission":1,"slot":"N","type":"num","ctx":"Une préparatrice pèse m = 2,5 g de glucose sur une balance. Formule brute : C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>.","data":"Masse molaire du glucose : M = 180,0 g/mol.","ask":"Calculer la quantité de matière n de glucose contenue dans l'échantillon.","unit":"mol","ans":0.013888888888888888,"sig":2,"rel":0.025,"traps":[[450,"Tu as multiplié. La relation est n = m / M : on divise la masse par la masse molaire."],[72,"Tu as inversé la division : n = m / M (la masse en haut, la masse molaire en bas)."]],"corr":"<span class=\"l\">n = m / M = 2,5 / 180,0</span><span class=\"l\">n = <b>0,014 mol</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q029"},{"mission":1,"slot":"N","type":"num","ctx":"Une préparatrice pèse m = 0,90 g de peroxyde d'hydrogène sur une balance. Formule brute : H<sub>2</sub>O<sub>2</sub>.","data":"Masse molaire du peroxyde d'hydrogène : M = 34,0 g/mol.","ask":"Calculer la quantité de matière n de peroxyde d'hydrogène contenue dans l'échantillon.","unit":"mol","ans":0.026470588235294117,"sig":2,"rel":0.025,"traps":[[30.6,"Tu as multiplié. La relation est n = m / M : on divise la masse par la masse molaire."],[37.77777777777778,"Tu as inversé la division : n = m / M (la masse en haut, la masse molaire en bas)."]],"corr":"<span class=\"l\">n = m / M = 0,90 / 34,0</span><span class=\"l\">n = <b>0,026 mol</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q030"},{"mission":1,"slot":"mg","type":"num","ctx":"Un comprimé contient m = 500 mg de paracétamol (médicament contre la douleur et la fièvre), de formule C<sub>8</sub>H<sub>9</sub>NO<sub>2</sub>.","data":"Masse molaire du paracétamol : M = 151,0 g/mol. Rappel : 1 g = 1 000 mg.","ask":"Calculer la quantité de matière n de paracétamol contenue dans un comprimé.","unit":"mol","ans":0.0033112582781456954,"sig":3,"rel":0.025,"traps":[[3.3112582781456954,"Convertis d'abord la masse en grammes : 500 mg = 0,500 g."],[75.5,"Tu as multiplié : n = m / M."]],"corr":"<span class=\"l\">Conversion : m = 500 mg = 0,500 g</span><span class=\"l\">n = m / M = 0,500 / 151,0</span><span class=\"l\">n = <b>0,00331 mol</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Convertir la masse en grammes : on divise par 1 000 (1 g = 1 000 mg).","Appliquer n = m / M.","Écrire le résultat en mol."],"id":"Q031"},{"mission":1,"slot":"mg","type":"num","ctx":"Un comprimé contient m = 500 mg d'acide ascorbique (vitamine C), de formule C<sub>6</sub>H<sub>8</sub>O<sub>6</sub>.","data":"Masse molaire de l'acide ascorbique : M = 176,0 g/mol. Rappel : 1 g = 1 000 mg.","ask":"Calculer la quantité de matière n d'acide ascorbique contenue dans un comprimé.","unit":"mol","ans":0.002840909090909091,"sig":3,"rel":0.025,"traps":[[2.840909090909091,"Convertis d'abord la masse en grammes : 500 mg = 0,500 g."],[88,"Tu as multiplié : n = m / M."]],"corr":"<span class=\"l\">Conversion : m = 500 mg = 0,500 g</span><span class=\"l\">n = m / M = 0,500 / 176,0</span><span class=\"l\">n = <b>0,00284 mol</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Convertir la masse en grammes : on divise par 1 000 (1 g = 1 000 mg).","Appliquer n = m / M.","Écrire le résultat en mol."],"id":"Q032"},{"mission":1,"slot":"mg","type":"num","ctx":"Un comprimé contient m = 300 mg d'aspirine (médicament anti-inflammatoire), de formule C<sub>9</sub>H<sub>8</sub>O<sub>4</sub>.","data":"Masse molaire de l'aspirine : M = 180,0 g/mol. Rappel : 1 g = 1 000 mg.","ask":"Calculer la quantité de matière n d'aspirine contenue dans un comprimé.","unit":"mol","ans":0.0016666666666666666,"sig":3,"rel":0.025,"traps":[[1.6666666666666667,"Convertis d'abord la masse en grammes : 300 mg = 0,300 g."],[54,"Tu as multiplié : n = m / M."]],"corr":"<span class=\"l\">Conversion : m = 300 mg = 0,300 g</span><span class=\"l\">n = m / M = 0,300 / 180,0</span><span class=\"l\">n = <b>0,00167 mol</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Convertir la masse en grammes : on divise par 1 000 (1 g = 1 000 mg).","Appliquer n = m / M.","Écrire le résultat en mol."],"id":"Q033"},{"mission":1,"slot":"Natoms","type":"num","ctx":"On dispose d'un échantillon de masse m = 4,50 g d'urée. Formule brute : CH<sub>4</sub>N<sub>2</sub>O.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(N) = 14,0 g/mol ; M(O) = 16,0 g/mol.","ask":"Calculer la masse molaire M de l'urée, puis la quantité de matière n d'urée contenue dans l'échantillon.","unit":"mol","ans":0.075,"sig":3,"rel":0.025,"traps":[[270,"Tu as multiplié. La relation est n = m / M : on divise la masse par la masse molaire."],[13.333333333333334,"Tu as inversé la division : n = m / M (la masse en haut, la masse molaire en bas)."]],"corr":"<span class=\"l\">M(CH<sub>4</sub>N<sub>2</sub>O) = M(C) + 4 × M(H) + 2 × M(N) + M(O)</span><span class=\"l\">M(CH<sub>4</sub>N<sub>2</sub>O) = 12,0 + 4 × 1,0 + 2 × 14,0 + 16,0 = <b>60,0 g/mol</b></span><span class=\"l\">n = m / M = 4,50 / 60,0</span><span class=\"l\">n = <b>0,0750 mol</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Calculer d'abord la masse molaire M en additionnant les masses molaires des atomes (sans oublier les nombres d'atomes).","Vérifier que la masse m est en grammes.","Appliquer n = m / M.","Écrire le résultat en mol."],"id":"Q034"},{"mission":1,"slot":"Natoms","type":"num","ctx":"Un flacon contient une masse m = 12 g d'ammoniac. Formule brute : NH<sub>3</sub>.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(N) = 14,0 g/mol ; M(O) = 16,0 g/mol.","ask":"Calculer la masse molaire M de l'ammoniac, puis la quantité de matière n d'ammoniac contenue dans l'échantillon.","unit":"mol","ans":0.7058823529411765,"sig":2,"rel":0.025,"traps":[[204,"Tu as multiplié. La relation est n = m / M : on divise la masse par la masse molaire."],[1.4166666666666667,"Tu as inversé la division : n = m / M (la masse en haut, la masse molaire en bas)."]],"corr":"<span class=\"l\">M(NH<sub>3</sub>) = M(N) + 3 × M(H)</span><span class=\"l\">M(NH<sub>3</sub>) = 14,0 + 3 × 1,0 = <b>17,0 g/mol</b></span><span class=\"l\">n = m / M = 12 / 17,0</span><span class=\"l\">n = <b>0,71 mol</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Calculer d'abord la masse molaire M en additionnant les masses molaires des atomes (sans oublier les nombres d'atomes).","Vérifier que la masse m est en grammes.","Appliquer n = m / M.","Écrire le résultat en mol."],"id":"Q035"},{"mission":1,"slot":"Natoms","type":"num","ctx":"Un flacon contient une masse m = 100 g d'hydroxyde de sodium. Formule brute : NaOH.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(O) = 16,0 g/mol ; M(Na) = 23,0 g/mol.","ask":"Calculer la masse molaire M de l'hydroxyde de sodium, puis la quantité de matière n d'hydroxyde de sodium contenue dans l'échantillon.","unit":"mol","ans":2.5,"sig":3,"rel":0.025,"traps":[[4000,"Tu as multiplié. La relation est n = m / M : on divise la masse par la masse molaire."],[0.4,"Tu as inversé la division : n = m / M (la masse en haut, la masse molaire en bas)."]],"corr":"<span class=\"l\">M(NaOH) = M(Na) + M(O) + M(H)</span><span class=\"l\">M(NaOH) = 23,0 + 16,0 + 1,0 = <b>40,0 g/mol</b></span><span class=\"l\">n = m / M = 100 / 40,0</span><span class=\"l\">n = <b>2,50 mol</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Calculer d'abord la masse molaire M en additionnant les masses molaires des atomes (sans oublier les nombres d'atomes).","Vérifier que la masse m est en grammes.","Appliquer n = m / M.","Écrire le résultat en mol."],"id":"Q036"},{"mission":2,"slot":"formula","type":"qcm","choices":["en mol","en g/mol","en g","en g/L"],"correct":2,"ctx":"On calcule m = n × M avec n en mol et M en g/mol.","ask":"Le résultat s'exprime :","corr":"<span class=\"l\">mol × g/mol = g : le résultat est une masse, <b>en g</b>.</span>","id":"Q037"},{"mission":2,"slot":"formula","type":"qcm","choices":["m = n / M","m = n × M","m = n + M","m = M / n"],"correct":1,"ctx":"On connaît la quantité de matière n et la masse molaire M d'une espèce chimique.","ask":"Quelle relation permet de calculer la masse m à peser ?","corr":"<span class=\"l\">De n = m / M, on tire <b>m = n × M</b>.</span>","id":"Q038"},{"mission":2,"slot":"m","type":"num","ctx":"On souhaite préparer un échantillon contenant n = 0,500 mol d'acide ascorbique. Formule brute : C<sub>6</sub>H<sub>8</sub>O<sub>6</sub>.","data":"Masse molaire de l'acide ascorbique : M = 176,0 g/mol.","ask":"Calculer la masse m d'acide ascorbique à peser.","unit":"g","ans":88,"sig":3,"rel":0.025,"traps":[[0.002840909090909091,"Tu as divisé. Pour passer de n à m, on multiplie : m = n × M."],[352,"Pour passer de n à m, on multiplie : m = n × M."]],"corr":"<span class=\"l\">m = n × M = 0,500 × 176,0</span><span class=\"l\">m = <b>88,0 g</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q039"},{"mission":2,"slot":"m","type":"num","ctx":"Un protocole demande d'utiliser n = 0,0050 mol de caféine. Formule brute : C<sub>8</sub>H<sub>10</sub>N<sub>4</sub>O<sub>2</sub>.","data":"Masse molaire de la caféine : M = 194,0 g/mol.","ask":"Calculer la masse m de caféine à peser.","unit":"g","ans":0.97,"sig":2,"rel":0.025,"traps":[[0.00002577319587628866,"Tu as divisé. Pour passer de n à m, on multiplie : m = n × M."],[38800,"Pour passer de n à m, on multiplie : m = n × M."]],"corr":"<span class=\"l\">m = n × M = 0,0050 × 194,0</span><span class=\"l\">m = <b>0,97 g</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q040"},{"mission":2,"slot":"m","type":"num","ctx":"Pour une analyse, il faut n = 0,0050 mol d'ibuprofène. Formule brute : C<sub>13</sub>H<sub>18</sub>O<sub>2</sub>.","data":"Masse molaire de l'ibuprofène : M = 206,0 g/mol.","ask":"Calculer la masse m d'ibuprofène à peser.","unit":"g","ans":1.03,"sig":2,"rel":0.025,"traps":[[0.000024271844660194176,"Tu as divisé. Pour passer de n à m, on multiplie : m = n × M."],[41200,"Pour passer de n à m, on multiplie : m = n × M."]],"corr":"<span class=\"l\">m = n × M = 0,0050 × 206,0</span><span class=\"l\">m = <b>1,0 g</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q041"},{"mission":2,"slot":"m","type":"num","ctx":"Pour une analyse, il faut n = 0,10 mol de dioxyde de carbone. Formule brute : CO<sub>2</sub>.","data":"Masse molaire du dioxyde de carbone : M = 44,0 g/mol.","ask":"Calculer la masse m de dioxyde de carbone à peser.","unit":"g","ans":4.4,"sig":2,"rel":0.025,"traps":[[0.002272727272727273,"Tu as divisé. Pour passer de n à m, on multiplie : m = n × M."],[440,"Pour passer de n à m, on multiplie : m = n × M."]],"corr":"<span class=\"l\">m = n × M = 0,10 × 44,0</span><span class=\"l\">m = <b>4,4 g</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q042"},{"mission":2,"slot":"m","type":"num","ctx":"Un protocole demande d'utiliser n = 0,500 mol d'acide lactique. Formule brute : C<sub>3</sub>H<sub>6</sub>O<sub>3</sub>.","data":"Masse molaire de l'acide lactique : M = 90,0 g/mol.","ask":"Calculer la masse m d'acide lactique à peser.","unit":"g","ans":45,"sig":3,"rel":0.025,"traps":[[0.005555555555555556,"Tu as divisé. Pour passer de n à m, on multiplie : m = n × M."],[180,"Pour passer de n à m, on multiplie : m = n × M."]],"corr":"<span class=\"l\">m = n × M = 0,500 × 90,0</span><span class=\"l\">m = <b>45,0 g</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q043"},{"mission":2,"slot":"m","type":"num","ctx":"Pour une analyse, il faut n = 2,00 mol d'acide éthanoïque. Formule brute : C<sub>2</sub>H<sub>4</sub>O<sub>2</sub>.","data":"Masse molaire de l'acide éthanoïque : M = 60,0 g/mol.","ask":"Calculer la masse m d'acide éthanoïque à peser.","unit":"g","ans":120,"sig":3,"rel":0.025,"traps":[[0.03333333333333333,"Tu as divisé. Pour passer de n à m, on multiplie : m = n × M."],[30,"Pour passer de n à m, on multiplie : m = n × M."]],"corr":"<span class=\"l\">m = n × M = 2,00 × 60,0</span><span class=\"l\">m = <b>120 g</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q044"},{"mission":2,"slot":"m","type":"num","ctx":"On souhaite préparer un échantillon contenant n = 0,200 mol d'eau. Formule brute : H<sub>2</sub>O.","data":"Masse molaire de l'eau : M = 18,0 g/mol.","ask":"Calculer la masse m d'eau à peser.","unit":"g","ans":3.6,"sig":3,"rel":0.025,"traps":[[0.011111111111111112,"Tu as divisé. Pour passer de n à m, on multiplie : m = n × M."],[90,"Pour passer de n à m, on multiplie : m = n × M."]],"corr":"<span class=\"l\">m = n × M = 0,200 × 18,0</span><span class=\"l\">m = <b>3,60 g</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q045"},{"mission":2,"slot":"m","type":"num","ctx":"Pour une analyse, il faut n = 0,010 mol d'hydrogénocarbonate de sodium. Formule brute : NaHCO<sub>3</sub>.","data":"Masse molaire de l'hydrogénocarbonate de sodium : M = 84,0 g/mol.","ask":"Calculer la masse m d'hydrogénocarbonate de sodium à peser.","unit":"g","ans":0.84,"sig":2,"rel":0.025,"traps":[[0.00011904761904761905,"Tu as divisé. Pour passer de n à m, on multiplie : m = n × M."],[8400,"Pour passer de n à m, on multiplie : m = n × M."]],"corr":"<span class=\"l\">m = n × M = 0,010 × 84,0</span><span class=\"l\">m = <b>0,84 g</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":null,"id":"Q046"},{"mission":2,"slot":"mmol","type":"num","ctx":"Un dosage nécessite n = 5,0 mmol d'aspirine (C<sub>9</sub>H<sub>8</sub>O<sub>4</sub>).","data":"Masse molaire de l'aspirine : M = 180,0 g/mol. Rappel : 1 mol = 1 000 mmol.","ask":"Calculer la masse m d'aspirine correspondante.","unit":"g","ans":0.9,"sig":2,"rel":0.025,"traps":[[900,"Convertis d'abord en mol : 5,0 mmol = 0,0050 mol."],[0.00002777777777777778,"Pour passer de n à m, on multiplie : m = n × M."]],"corr":"<span class=\"l\">Conversion : n = 5,0 mmol = 0,0050 mol</span><span class=\"l\">m = n × M = 0,0050 × 180,0</span><span class=\"l\">m = <b>0,90 g</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Convertir la quantité de matière en mol : on divise par 1 000.","Appliquer m = n × M.","Écrire le résultat en g."],"id":"Q047"},{"mission":2,"slot":"mmol","type":"num","ctx":"Un dosage nécessite n = 50 mmol de glycérol (C<sub>3</sub>H<sub>8</sub>O<sub>3</sub>).","data":"Masse molaire du glycérol : M = 92,0 g/mol. Rappel : 1 mol = 1 000 mmol.","ask":"Calculer la masse m de glycérol correspondante.","unit":"g","ans":4.6000000000000005,"sig":2,"rel":0.025,"traps":[[4600,"Convertis d'abord en mol : 50 mmol = 0,050 mol."],[0.0005434782608695652,"Pour passer de n à m, on multiplie : m = n × M."]],"corr":"<span class=\"l\">Conversion : n = 50 mmol = 0,050 mol</span><span class=\"l\">m = n × M = 0,050 × 92,0</span><span class=\"l\">m = <b>4,6 g</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Convertir la quantité de matière en mol : on divise par 1 000.","Appliquer m = n × M.","Écrire le résultat en g."],"id":"Q048"},{"mission":2,"slot":"mmol","type":"num","ctx":"Un dosage nécessite n = 20 mmol de glucose (C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>).","data":"Masse molaire du glucose : M = 180,0 g/mol. Rappel : 1 mol = 1 000 mmol.","ask":"Calculer la masse m de glucose correspondante.","unit":"g","ans":3.6,"sig":2,"rel":0.025,"traps":[[3600,"Convertis d'abord en mol : 20 mmol = 0,020 mol."],[0.00011111111111111112,"Pour passer de n à m, on multiplie : m = n × M."]],"corr":"<span class=\"l\">Conversion : n = 20 mmol = 0,020 mol</span><span class=\"l\">m = n × M = 0,020 × 180,0</span><span class=\"l\">m = <b>3,6 g</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Convertir la quantité de matière en mol : on divise par 1 000.","Appliquer m = n × M.","Écrire le résultat en g."],"id":"Q049"},{"mission":2,"slot":"matoms","type":"num","ctx":"Pour une analyse, il faut n = 0,500 mol d'éthanol. Formule brute : C<sub>2</sub>H<sub>6</sub>O.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(O) = 16,0 g/mol.","ask":"Calculer la masse molaire M de l'éthanol, puis la masse m d'éthanol à peser.","unit":"g","ans":23,"sig":3,"rel":0.025,"traps":[[0.010869565217391304,"Tu as divisé. Pour passer de n à m, on multiplie : m = n × M."],[92,"Pour passer de n à m, on multiplie : m = n × M."]],"corr":"<span class=\"l\">M(C<sub>2</sub>H<sub>6</sub>O) = 2 × M(C) + 6 × M(H) + M(O)</span><span class=\"l\">M(C<sub>2</sub>H<sub>6</sub>O) = 2 × 12,0 + 6 × 1,0 + 16,0 = <b>46,0 g/mol</b></span><span class=\"l\">m = n × M = 0,500 × 46,0</span><span class=\"l\">m = <b>23,0 g</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Calculer d'abord la masse molaire M (somme des masses des atomes).","Vérifier que n est en mol.","Appliquer m = n × M.","Écrire le résultat en g."],"id":"Q050"},{"mission":2,"slot":"matoms","type":"num","ctx":"On souhaite préparer un échantillon contenant n = 0,200 mol d'hydroxyde de sodium. Formule brute : NaOH.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(O) = 16,0 g/mol ; M(Na) = 23,0 g/mol.","ask":"Calculer la masse molaire M de l'hydroxyde de sodium, puis la masse m d'hydroxyde de sodium à peser.","unit":"g","ans":8,"sig":3,"rel":0.025,"traps":[[0.005,"Tu as divisé. Pour passer de n à m, on multiplie : m = n × M."],[200,"Pour passer de n à m, on multiplie : m = n × M."]],"corr":"<span class=\"l\">M(NaOH) = M(Na) + M(O) + M(H)</span><span class=\"l\">M(NaOH) = 23,0 + 16,0 + 1,0 = <b>40,0 g/mol</b></span><span class=\"l\">m = n × M = 0,200 × 40,0</span><span class=\"l\">m = <b>8,00 g</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Calculer d'abord la masse molaire M (somme des masses des atomes).","Vérifier que n est en mol.","Appliquer m = n × M.","Écrire le résultat en g."],"id":"Q051"},{"mission":2,"slot":"matoms","type":"num","ctx":"Pour une analyse, il faut n = 0,010 mol de chlorure de sodium. Formule brute : NaCl.","data":"Masses molaires atomiques : M(H) = 1,0 g/mol ; M(C) = 12,0 g/mol ; M(O) = 16,0 g/mol ; M(Na) = 23,0 g/mol ; M(Cl) = 35,5 g/mol.","ask":"Calculer la masse molaire M du chlorure de sodium, puis la masse m de chlorure de sodium à peser.","unit":"g","ans":0.585,"sig":2,"rel":0.025,"traps":[[0.00017094017094017094,"Tu as divisé. Pour passer de n à m, on multiplie : m = n × M."],[5850,"Pour passer de n à m, on multiplie : m = n × M."]],"corr":"<span class=\"l\">M(NaCl) = M(Na) + M(Cl)</span><span class=\"l\">M(NaCl) = 23,0 + 35,5 = <b>58,5 g/mol</b></span><span class=\"l\">m = n × M = 0,010 × 58,5</span><span class=\"l\">m = <b>0,58 g</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Calculer d'abord la masse molaire M (somme des masses des atomes).","Vérifier que n est en mol.","Appliquer m = n × M.","Écrire le résultat en g."],"id":"Q052"},{"mission":3,"slot":"pip","type":"qcm","choices":["une pipette jaugée de 50 mL","une éprouvette graduée de 100 mL","un bécher de 100 mL","une fiole jaugée de 200 mL"],"correct":0,"ctx":"Pour préparer une solution fille, il faut prélever précisément V<sub>mère</sub> = 50,0 mL d'un bain de bouche concentré.","ask":"Quelle verrerie faut-il utiliser pour ce prélèvement ?","corr":"<span class=\"l\">Pour prélever un volume précis, on utilise <b>une pipette jaugée de 50 mL</b> (avec une propipette). Le bécher et l'éprouvette ne sont pas assez précis.</span>","id":"Q053"},{"mission":3,"slot":"pip","type":"qcm","choices":["une pipette jaugée de 10 mL","une fiole jaugée de 100 mL","une éprouvette graduée de 100 mL","un bécher de 100 mL"],"correct":0,"ctx":"Pour préparer une solution fille, il faut prélever précisément V<sub>mère</sub> = 10,0 mL d'une solution d'acide chlorhydrique.","ask":"Quelle verrerie faut-il utiliser pour ce prélèvement ?","corr":"<span class=\"l\">Pour prélever un volume précis, on utilise <b>une pipette jaugée de 10 mL</b> (avec une propipette). Le bécher et l'éprouvette ne sont pas assez précis.</span>","id":"Q054"},{"mission":3,"slot":"pip","type":"qcm","choices":["une éprouvette graduée de 100 mL","une pipette jaugée de 10 mL","une fiole jaugée de 1000 mL","un bécher de 100 mL"],"correct":1,"ctx":"Pour préparer une solution fille, il faut prélever précisément V<sub>mère</sub> = 10,0 mL d'une solution d'acide chlorhydrique.","ask":"Quelle verrerie faut-il utiliser pour ce prélèvement ?","corr":"<span class=\"l\">Pour prélever un volume précis, on utilise <b>une pipette jaugée de 10 mL</b> (avec une propipette). Le bécher et l'éprouvette ne sont pas assez précis.</span>","id":"Q055"},{"mission":3,"slot":"F","type":"num","ctx":"Une infirmière dispose d'une solution d'acide chlorhydrique de concentration C<sub>mère</sub> = 1,00 mol/L. Il faut préparer une solution fille de concentration C<sub>fille</sub> = 0,0500 mol/L.","ask":"Calculer le facteur de dilution F.","unit":"(sans unité)","ans":20,"noSig":true,"show":"20","rel":0.02,"traps":[[0.05,"F = C<sub>mère</sub> / C<sub>fille</sub> : on divise la plus grande concentration par la plus petite, F est toujours plus grand que 1."]],"corr":"<span class=\"l\">F = C<sub>mère</sub> / C<sub>fille</sub> = 1,00 / 0,0500</span><span class=\"l\">F = <b>20</b> (la solution est diluée 20 fois)</span>","id":"Q056"},{"mission":3,"slot":"F","type":"num","ctx":"Une infirmière dispose d'une solution d'hydroxyde de sodium de concentration C<sub>mère</sub> = 0,100 mol/L. Il faut préparer une solution fille de concentration C<sub>fille</sub> = 0,0100 mol/L.","ask":"Calculer le facteur de dilution F.","unit":"(sans unité)","ans":10,"noSig":true,"show":"10","rel":0.02,"traps":[[0.1,"F = C<sub>mère</sub> / C<sub>fille</sub> : on divise la plus grande concentration par la plus petite, F est toujours plus grand que 1."]],"corr":"<span class=\"l\">F = C<sub>mère</sub> / C<sub>fille</sub> = 0,100 / 0,0100</span><span class=\"l\">F = <b>10</b> (la solution est diluée 10 fois)</span>","id":"Q057"},{"mission":3,"slot":"F","type":"num","ctx":"Un préparateur en pharmacie dispose d'un bain de bouche concentré de concentration C<sub>mère</sub> = 40,0 g/L. Il faut préparer une solution fille de concentration C<sub>fille</sub> = 1,00 g/L.","ask":"Calculer le facteur de dilution F.","unit":"(sans unité)","ans":40,"noSig":true,"show":"40","rel":0.02,"traps":[[0.025,"F = C<sub>mère</sub> / C<sub>fille</sub> : on divise la plus grande concentration par la plus petite, F est toujours plus grand que 1."]],"corr":"<span class=\"l\">F = C<sub>mère</sub> / C<sub>fille</sub> = 40,0 / 1,00</span><span class=\"l\">F = <b>40</b> (la solution est diluée 40 fois)</span>","id":"Q058"},{"mission":3,"slot":"VmF","type":"num","ctx":"À partir d'une solution de sulfate de cuivre, on veut préparer V<sub>fille</sub> = 250 mL d'une solution diluée 25 fois (facteur de dilution F = 25).","ask":"Calculer le volume V<sub>mère</sub> de solution mère à prélever.","unit":"mL","ans":10,"sig":3,"rel":0.02,"traps":[[6250,"Le volume prélevé est plus petit que le volume de la solution fille : V<sub>mère</sub> = V<sub>fille</sub> / F."]],"corr":"<span class=\"l\">V<sub>mère</sub> = V<sub>fille</sub> / F = 250 / 25</span><span class=\"l\">V<sub>mère</sub> = <b>10,0 mL</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Repérer V<sub>fille</sub> et F.","Appliquer V<sub>mère</sub> = V<sub>fille</sub> / F.","V<sub>mère</sub> est dans la même unité que V<sub>fille</sub> (ici en mL)."],"id":"Q059"},{"mission":3,"slot":"VmF","type":"num","ctx":"À partir d'une solution de sulfate de cuivre, on veut préparer V<sub>fille</sub> = 500 mL d'une solution diluée 20 fois (facteur de dilution F = 20).","ask":"Calculer le volume V<sub>mère</sub> de solution mère à prélever.","unit":"mL","ans":25,"sig":3,"rel":0.02,"traps":[[10000,"Le volume prélevé est plus petit que le volume de la solution fille : V<sub>mère</sub> = V<sub>fille</sub> / F."]],"corr":"<span class=\"l\">V<sub>mère</sub> = V<sub>fille</sub> / F = 500 / 20</span><span class=\"l\">V<sub>mère</sub> = <b>25,0 mL</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Repérer V<sub>fille</sub> et F.","Appliquer V<sub>mère</sub> = V<sub>fille</sub> / F.","V<sub>mère</sub> est dans la même unité que V<sub>fille</sub> (ici en mL)."],"id":"Q060"},{"mission":3,"slot":"VmF","type":"num","ctx":"À partir d'une solution de chlorure de sodium, on veut préparer V<sub>fille</sub> = 250 mL d'une solution diluée 5 fois (facteur de dilution F = 5).","ask":"Calculer le volume V<sub>mère</sub> de solution mère à prélever.","unit":"mL","ans":50,"sig":3,"rel":0.02,"traps":[[1250,"Le volume prélevé est plus petit que le volume de la solution fille : V<sub>mère</sub> = V<sub>fille</sub> / F."]],"corr":"<span class=\"l\">V<sub>mère</sub> = V<sub>fille</sub> / F = 250 / 5</span><span class=\"l\">V<sub>mère</sub> = <b>50,0 mL</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Repérer V<sub>fille</sub> et F.","Appliquer V<sub>mère</sub> = V<sub>fille</sub> / F.","V<sub>mère</sub> est dans la même unité que V<sub>fille</sub> (ici en mL)."],"id":"Q061"},{"mission":3,"slot":"Vm","type":"num","ctx":"Une technicienne de laboratoire doit préparer V<sub>fille</sub> = 200 mL de solution de concentration C<sub>fille</sub> = 5,00 g/L à partir d'une solution mère de glucose de concentration C<sub>mère</sub> = 20,0 g/L.","ask":"Calculer le facteur de dilution F, puis le volume V<sub>mère</sub> de solution mère à prélever.","unit":"mL","ans":50,"sig":3,"rel":0.02,"traps":[[800,"Le volume prélevé est plus petit que V<sub>fille</sub> : on divise V<sub>fille</sub> par F."],[4,"4 est le facteur de dilution. Il reste à calculer V<sub>mère</sub> = V<sub>fille</sub> / F."]],"corr":"<span class=\"l\">F = C<sub>mère</sub> / C<sub>fille</sub> = 20,0 / 5,00 = 4</span><span class=\"l\">V<sub>mère</sub> = V<sub>fille</sub> / F = 200 / 4 = <b>50,0 mL</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q062"},{"mission":3,"slot":"Vm","type":"num","ctx":"Une infirmière doit préparer V<sub>fille</sub> = 100 mL de solution de concentration C<sub>fille</sub> = 2,00 g/L à partir d'une solution concentrée d'éosine de concentration C<sub>mère</sub> = 10,0 g/L.","ask":"Calculer le facteur de dilution F, puis le volume V<sub>mère</sub> de solution mère à prélever.","unit":"mL","ans":20,"sig":3,"rel":0.02,"traps":[[500,"Le volume prélevé est plus petit que V<sub>fille</sub> : on divise V<sub>fille</sub> par F."],[5,"5 est le facteur de dilution. Il reste à calculer V<sub>mère</sub> = V<sub>fille</sub> / F."]],"corr":"<span class=\"l\">F = C<sub>mère</sub> / C<sub>fille</sub> = 10,0 / 2,00 = 5</span><span class=\"l\">V<sub>mère</sub> = V<sub>fille</sub> / F = 100 / 5 = <b>20,0 mL</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q063"},{"mission":3,"slot":"Vm","type":"num","ctx":"Une préparatrice en pharmacie doit préparer V<sub>fille</sub> = 200 mL de solution de concentration C<sub>fille</sub> = 1,00 g/L à partir d'une solution de chlorure de sodium de concentration C<sub>mère</sub> = 40,0 g/L.","ask":"Calculer le facteur de dilution F, puis le volume V<sub>mère</sub> de solution mère à prélever.","unit":"mL","ans":5,"sig":3,"rel":0.02,"traps":[[8000,"Le volume prélevé est plus petit que V<sub>fille</sub> : on divise V<sub>fille</sub> par F."],[40,"40 est le facteur de dilution. Il reste à calculer V<sub>mère</sub> = V<sub>fille</sub> / F."]],"corr":"<span class=\"l\">F = C<sub>mère</sub> / C<sub>fille</sub> = 40,0 / 1,00 = 40</span><span class=\"l\">V<sub>mère</sub> = V<sub>fille</sub> / F = 200 / 40 = <b>5,00 mL</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q064"},{"mission":3,"slot":"Vm","type":"num","ctx":"Un préparateur en pharmacie doit préparer V<sub>fille</sub> = 200 mL de solution de concentration C<sub>fille</sub> = 0,100 mol/L à partir d'une solution d'acide chlorhydrique de concentration C<sub>mère</sub> = 0,400 mol/L.","ask":"Calculer le facteur de dilution F, puis le volume V<sub>mère</sub> de solution mère à prélever.","unit":"mL","ans":50,"sig":3,"rel":0.02,"traps":[[800,"Le volume prélevé est plus petit que V<sub>fille</sub> : on divise V<sub>fille</sub> par F."],[4,"4 est le facteur de dilution. Il reste à calculer V<sub>mère</sub> = V<sub>fille</sub> / F."]],"corr":"<span class=\"l\">F = C<sub>mère</sub> / C<sub>fille</sub> = 0,400 / 0,100 = 4</span><span class=\"l\">V<sub>mère</sub> = V<sub>fille</sub> / F = 200 / 4 = <b>50,0 mL</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q065"},{"mission":3,"slot":"Vm","type":"num","ctx":"Une élève de ST2S en TP doit préparer V<sub>fille</sub> = 50,0 mL de solution de concentration C<sub>fille</sub> = 0,0500 mol/L à partir d'une solution d'acide chlorhydrique de concentration C<sub>mère</sub> = 0,250 mol/L.","ask":"Calculer le facteur de dilution F, puis le volume V<sub>mère</sub> de solution mère à prélever.","unit":"mL","ans":10,"sig":3,"rel":0.02,"traps":[[250,"Le volume prélevé est plus petit que V<sub>fille</sub> : on divise V<sub>fille</sub> par F."],[5,"5 est le facteur de dilution. Il reste à calculer V<sub>mère</sub> = V<sub>fille</sub> / F."]],"corr":"<span class=\"l\">F = C<sub>mère</sub> / C<sub>fille</sub> = 0,250 / 0,0500 = 5</span><span class=\"l\">V<sub>mère</sub> = V<sub>fille</sub> / F = 50,0 / 5 = <b>10,0 mL</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q066"},{"mission":3,"slot":"Vm","type":"num","ctx":"Un élève de ST2S en TP doit préparer V<sub>fille</sub> = 500 mL de solution de concentration C<sub>fille</sub> = 1,00 g/L à partir d'une solution concentrée d'éosine de concentration C<sub>mère</sub> = 20,0 g/L.","ask":"Calculer le facteur de dilution F, puis le volume V<sub>mère</sub> de solution mère à prélever.","unit":"mL","ans":25,"sig":3,"rel":0.02,"traps":[[10000,"Le volume prélevé est plus petit que V<sub>fille</sub> : on divise V<sub>fille</sub> par F."],[20,"20 est le facteur de dilution. Il reste à calculer V<sub>mère</sub> = V<sub>fille</sub> / F."]],"corr":"<span class=\"l\">F = C<sub>mère</sub> / C<sub>fille</sub> = 20,0 / 1,00 = 20</span><span class=\"l\">V<sub>mère</sub> = V<sub>fille</sub> / F = 500 / 20 = <b>25,0 mL</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q067"},{"mission":3,"slot":"Vm","type":"num","ctx":"Un préparateur en pharmacie doit préparer V<sub>fille</sub> = 50,0 mL de solution de concentration C<sub>fille</sub> = 0,0500 mol/L à partir d'une solution d'acide chlorhydrique de concentration C<sub>mère</sub> = 0,500 mol/L.","ask":"Calculer le facteur de dilution F, puis le volume V<sub>mère</sub> de solution mère à prélever.","unit":"mL","ans":5,"sig":3,"rel":0.02,"traps":[[500,"Le volume prélevé est plus petit que V<sub>fille</sub> : on divise V<sub>fille</sub> par F."],[10,"10 est le facteur de dilution. Il reste à calculer V<sub>mère</sub> = V<sub>fille</sub> / F."]],"corr":"<span class=\"l\">F = C<sub>mère</sub> / C<sub>fille</sub> = 0,500 / 0,0500 = 10</span><span class=\"l\">V<sub>mère</sub> = V<sub>fille</sub> / F = 50,0 / 10 = <b>5,00 mL</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q068"},{"mission":4,"slot":"formula","type":"qcm","choices":["m = C<sub>m</sub> + V","m = C<sub>m</sub> / V","m = C<sub>m</sub> × V","m = V / C<sub>m</sub>"],"correct":2,"ctx":"On veut préparer un volume V de solution de concentration massique C<sub>m</sub>.","ask":"Quelle relation donne la masse m de soluté à peser ?","corr":"<span class=\"l\">C<sub>m</sub> = m / V, donc <b>m = C<sub>m</sub> × V</b>.</span>","id":"Q069"},{"mission":4,"slot":"formula","type":"qcm","choices":["C<sub>m</sub> en mol/L, V en L, m en mol","C<sub>m</sub> en g/L, V en mL, m en kg","C<sub>m</sub> en g/L, V en L, m en g","C<sub>m</sub> en g/mol, V en mL, m en g"],"correct":2,"ctx":"On utilise la relation m = C<sub>m</sub> × V.","ask":"Quelles sont les unités à utiliser ?","corr":"<span class=\"l\"><b>C<sub>m</sub> en g/L, V en L, m en g</b> : g/L × L = g.</span>","id":"Q070"},{"mission":4,"slot":"conv","type":"qcm","choices":["1,50 L","0,0150 L","15,0 L","0,150 L"],"correct":3,"ctx":"Pour utiliser la relation m = C<sub>m</sub> × V, le volume doit être exprimé en litres.","ask":"V = 150 mL correspond à :","corr":"<span class=\"l\">1 L = 1 000 mL, donc on divise par 1 000 : 150 mL = <b>0,150 L</b>.</span>","method":["1 L = 1 000 mL.","Pour passer des mL aux L, on divise par 1 000 (on décale la virgule de 3 rangs vers la gauche)."],"id":"Q071"},{"mission":4,"slot":"conv","type":"qcm","choices":["0,250 L","0,0250 L","25,0 L","2,50 L"],"correct":0,"ctx":"Pour utiliser la relation m = C<sub>m</sub> × V, le volume doit être exprimé en litres.","ask":"V = 250 mL correspond à :","corr":"<span class=\"l\">1 L = 1 000 mL, donc on divise par 1 000 : 250 mL = <b>0,250 L</b>.</span>","method":["1 L = 1 000 mL.","Pour passer des mL aux L, on divise par 1 000 (on décale la virgule de 3 rangs vers la gauche)."],"id":"Q072"},{"mission":4,"slot":"conv","type":"qcm","choices":["75,0 L","7,50 L","0,0750 L","0,750 L"],"correct":3,"ctx":"Pour utiliser la relation m = C<sub>m</sub> × V, le volume doit être exprimé en litres.","ask":"V = 750 mL correspond à :","corr":"<span class=\"l\">1 L = 1 000 mL, donc on divise par 1 000 : 750 mL = <b>0,750 L</b>.</span>","method":["1 L = 1 000 mL.","Pour passer des mL aux L, on divise par 1 000 (on décale la virgule de 3 rangs vers la gauche)."],"id":"Q073"},{"mission":4,"slot":"L","type":"num","ctx":"Un technicien de laboratoire doit préparer V = 2,00 L d'une solution de vitamine C de concentration massique en acide ascorbique C<sub>m</sub> = 5,0 g/L.","ask":"Calculer la masse m d'acide ascorbique à peser.","unit":"g","ans":10,"sig":2,"rel":0.02,"traps":[[2.5,"m = C<sub>m</sub> × V : il faut multiplier."],[0.4,"m = C<sub>m</sub> × V : il faut multiplier."]],"corr":"<span class=\"l\">m = C<sub>m</sub> × V = 5,0 × 2,00</span><span class=\"l\">m = <b>10 g</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q074"},{"mission":4,"slot":"L","type":"num","ctx":"Un préparateur en pharmacie doit préparer V = 1,50 L d'une solution sucrée de concentration massique en saccharose C<sub>m</sub> = 40 g/L.","ask":"Calculer la masse m de saccharose à peser.","unit":"g","ans":60,"sig":2,"rel":0.02,"traps":[[26.666666666666668,"m = C<sub>m</sub> × V : il faut multiplier."],[0.0375,"m = C<sub>m</sub> × V : il faut multiplier."]],"corr":"<span class=\"l\">m = C<sub>m</sub> × V = 40 × 1,50</span><span class=\"l\">m = <b>60 g</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q075"},{"mission":4,"slot":"L","type":"num","ctx":"Une élève de ST2S en TP doit préparer V = 0,500 L d'une solution sucrée de concentration massique en saccharose C<sub>m</sub> = 20,0 g/L.","ask":"Calculer la masse m de saccharose à peser.","unit":"g","ans":10,"sig":3,"rel":0.02,"traps":[[40,"m = C<sub>m</sub> × V : il faut multiplier."],[0.025,"m = C<sub>m</sub> × V : il faut multiplier."]],"corr":"<span class=\"l\">m = C<sub>m</sub> × V = 20,0 × 0,500</span><span class=\"l\">m = <b>10,0 g</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q076"},{"mission":4,"slot":"mL","type":"num","ctx":"Une élève de ST2S en TP doit préparer V = 1 000 mL d'une solution de chlorure de potassium de concentration massique en chlorure de potassium C<sub>m</sub> = 15,0 g/L.","ask":"Calculer la masse m de chlorure de potassium à peser.","unit":"g","ans":15,"sig":3,"rel":0.02,"traps":[[15000,"Convertis d'abord le volume en litres : 1 000 mL = 1,000 L."]],"corr":"<span class=\"l\">Conversion : V = 1 000 mL = 1,000 L</span><span class=\"l\">m = C<sub>m</sub> × V = 15,0 × 1,000</span><span class=\"l\">m = <b>15,0 g</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q077"},{"mission":4,"slot":"mL","type":"num","ctx":"Un préparateur en pharmacie doit préparer V = 1 000 mL d'une solution de bicarbonate de sodium pour bain de bouche de concentration massique en hydrogénocarbonate de sodium C<sub>m</sub> = 10,0 g/L.","ask":"Calculer la masse m d'hydrogénocarbonate de sodium à peser.","unit":"g","ans":10,"sig":3,"rel":0.02,"traps":[[10000,"Convertis d'abord le volume en litres : 1 000 mL = 1,000 L."]],"corr":"<span class=\"l\">Conversion : V = 1 000 mL = 1,000 L</span><span class=\"l\">m = C<sub>m</sub> × V = 10,0 × 1,000</span><span class=\"l\">m = <b>10,0 g</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q078"},{"mission":4,"slot":"mL","type":"num","ctx":"Un élève de ST2S en TP doit préparer V = 50,0 mL de sérum physiologique de concentration massique en chlorure de sodium C<sub>m</sub> = 9,0 g/L.","ask":"Calculer la masse m de chlorure de sodium à peser.","unit":"g","ans":0.45,"sig":2,"rel":0.02,"traps":[[450,"Convertis d'abord le volume en litres : 50,0 mL = 0,0500 L."],[180,"m = C<sub>m</sub> × V : il faut multiplier."]],"corr":"<span class=\"l\">Conversion : V = 50,0 mL = 0,0500 L</span><span class=\"l\">m = C<sub>m</sub> × V = 9,0 × 0,0500</span><span class=\"l\">m = <b>0,45 g</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q079"},{"mission":4,"slot":"mL","type":"num","ctx":"Un élève de ST2S en TP doit préparer V = 50,0 mL d'un soluté glucosé de concentration massique en glucose C<sub>m</sub> = 100 g/L.","ask":"Calculer la masse m de glucose à peser.","unit":"g","ans":5,"sig":3,"rel":0.02,"traps":[[5000,"Convertis d'abord le volume en litres : 50,0 mL = 0,0500 L."],[2000,"m = C<sub>m</sub> × V : il faut multiplier."]],"corr":"<span class=\"l\">Conversion : V = 50,0 mL = 0,0500 L</span><span class=\"l\">m = C<sub>m</sub> × V = 100 × 0,0500</span><span class=\"l\">m = <b>5,00 g</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q080"},{"mission":4,"slot":"mL","type":"num","ctx":"Une technicienne de laboratoire doit préparer V = 200 mL d'une solution de bicarbonate de sodium pour bain de bouche de concentration massique en hydrogénocarbonate de sodium C<sub>m</sub> = 10,0 g/L.","ask":"Calculer la masse m d'hydrogénocarbonate de sodium à peser.","unit":"g","ans":2,"sig":3,"rel":0.02,"traps":[[2000,"Convertis d'abord le volume en litres : 200 mL = 0,200 L."],[50,"m = C<sub>m</sub> × V : il faut multiplier."]],"corr":"<span class=\"l\">Conversion : V = 200 mL = 0,200 L</span><span class=\"l\">m = C<sub>m</sub> × V = 10,0 × 0,200</span><span class=\"l\">m = <b>2,00 g</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q081"},{"mission":4,"slot":"mL","type":"num","ctx":"Une infirmière doit préparer V = 50,0 mL d'une solution sucrée de concentration massique en saccharose C<sub>m</sub> = 40 g/L.","ask":"Calculer la masse m de saccharose à peser.","unit":"g","ans":2,"sig":2,"rel":0.02,"traps":[[2000,"Convertis d'abord le volume en litres : 50,0 mL = 0,0500 L."],[800,"m = C<sub>m</sub> × V : il faut multiplier."]],"corr":"<span class=\"l\">Conversion : V = 50,0 mL = 0,0500 L</span><span class=\"l\">m = C<sub>m</sub> × V = 40 × 0,0500</span><span class=\"l\">m = <b>2,0 g</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q082"},{"mission":4,"slot":"mL","type":"num","ctx":"Un infirmier doit préparer V = 1 000 mL de sérum physiologique de concentration massique en chlorure de sodium C<sub>m</sub> = 9,0 g/L.","ask":"Calculer la masse m de chlorure de sodium à peser.","unit":"g","ans":9,"sig":2,"rel":0.02,"traps":[[9000,"Convertis d'abord le volume en litres : 1 000 mL = 1,000 L."]],"corr":"<span class=\"l\">Conversion : V = 1 000 mL = 1,000 L</span><span class=\"l\">m = C<sub>m</sub> × V = 9,0 × 1,000</span><span class=\"l\">m = <b>9,0 g</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q083"},{"mission":4,"slot":"mL","type":"num","ctx":"Une technicienne de laboratoire doit préparer V = 250 mL d'une solution de chlorure de potassium de concentration massique en chlorure de potassium C<sub>m</sub> = 15,0 g/L.","ask":"Calculer la masse m de chlorure de potassium à peser.","unit":"g","ans":3.75,"sig":3,"rel":0.02,"traps":[[3750,"Convertis d'abord le volume en litres : 250 mL = 0,250 L."],[60,"m = C<sub>m</sub> × V : il faut multiplier."]],"corr":"<span class=\"l\">Conversion : V = 250 mL = 0,250 L</span><span class=\"l\">m = C<sub>m</sub> × V = 15,0 × 0,250</span><span class=\"l\">m = <b>3,75 g</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","id":"Q084"},{"mission":5,"slot":"formula","type":"qcm","choices":["c = n / V","c = m / V","c = V / n","c = n × V"],"correct":0,"ctx":"On dissout une quantité de matière n de soluté pour obtenir un volume V de solution.","ask":"Quelle relation définit la concentration molaire c du soluté ?","corr":"<span class=\"l\"><b>c = n / V</b> avec n en mol, V en L et c en mol/L. La relation m / V donne la concentration massique C<sub>m</sub>.</span>","id":"Q085"},{"mission":5,"slot":"formula","type":"qcm","choices":["C<sub>m</sub> = c × M","C<sub>m</sub> = M / c","C<sub>m</sub> = c / M","C<sub>m</sub> = c + M"],"correct":0,"ctx":"On connaît la concentration molaire c d'un soluté (en mol/L) et sa masse molaire M (en g/mol).","ask":"Quelle relation permet de calculer sa concentration massique C<sub>m</sub> (en g/L) ?","corr":"<span class=\"l\"><b>C<sub>m</sub> = c × M</b> : mol/L × g/mol = g/L. Inversement, c = C<sub>m</sub> / M.</span>","id":"Q086"},{"mission":5,"slot":"c","type":"num","ctx":"On dissout n = 0,050 mol d'urée dans de l'eau distillée pour obtenir V = 100 mL de solution.","ask":"Calculer la concentration molaire c en urée de cette solution.","tag":"urée","unit":"mol/L","ans":0.5,"sig":2,"rel":0.025,"traps":[[0.0005,"Convertis d'abord le volume en litres : 100 mL = 0,100 L."],[0.005000000000000001,"c = n / V : on divise la quantité de matière par le volume."],[2,"Tu as inversé la division : c = n / V."]],"corr":"<span class=\"l\">Conversion : V = 100 mL = 0,100 L</span><span class=\"l\">c = n / V = 0,050 / 0,100</span><span class=\"l\">c = <b>0,50 mol/L</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Vérifier que n est en mol.","Convertir le volume V en litres si besoin (1 L = 1 000 mL).","Appliquer c = n / V.","Écrire le résultat en mol/L."],"id":"Q087"},{"mission":5,"slot":"c","type":"num","ctx":"On dissout n = 0,150 mol d'hydroxyde de sodium dans de l'eau distillée pour obtenir V = 2,0 L de solution.","ask":"Calculer la concentration molaire c en hydroxyde de sodium de cette solution.","tag":"hydroxyde de sodium","unit":"mol/L","ans":0.075,"sig":2,"rel":0.025,"traps":[[0.3,"c = n / V : on divise la quantité de matière par le volume."],[13.333333333333334,"Tu as inversé la division : c = n / V."]],"corr":"<span class=\"l\">c = n / V = 0,150 / 2,0</span><span class=\"l\">c = <b>0,075 mol/L</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Vérifier que n est en mol.","Convertir le volume V en litres si besoin (1 L = 1 000 mL).","Appliquer c = n / V.","Écrire le résultat en mol/L."],"id":"Q088"},{"mission":5,"slot":"c","type":"num","ctx":"On dissout n = 0,200 mol d'acide éthanoïque dans de l'eau distillée pour obtenir V = 50,0 mL de solution.","ask":"Calculer la concentration molaire c en acide éthanoïque de cette solution.","tag":"acide éthanoïque","unit":"mol/L","ans":4,"sig":3,"rel":0.025,"traps":[[0.004,"Convertis d'abord le volume en litres : 50,0 mL = 0,0500 L."],[0.010000000000000002,"c = n / V : on divise la quantité de matière par le volume."],[0.25,"Tu as inversé la division : c = n / V."]],"corr":"<span class=\"l\">Conversion : V = 50,0 mL = 0,0500 L</span><span class=\"l\">c = n / V = 0,200 / 0,0500</span><span class=\"l\">c = <b>4,00 mol/L</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Vérifier que n est en mol.","Convertir le volume V en litres si besoin (1 L = 1 000 mL).","Appliquer c = n / V.","Écrire le résultat en mol/L."],"id":"Q089"},{"mission":5,"slot":"c","type":"num","ctx":"On dissout n = 0,0250 mol de paracétamol dans de l'eau distillée pour obtenir V = 250 mL de solution.","ask":"Calculer la concentration molaire c en paracétamol de cette solution.","tag":"paracétamol","unit":"mol/L","ans":0.1,"sig":3,"rel":0.025,"traps":[[0.0001,"Convertis d'abord le volume en litres : 250 mL = 0,250 L."],[0.00625,"c = n / V : on divise la quantité de matière par le volume."],[10,"Tu as inversé la division : c = n / V."]],"corr":"<span class=\"l\">Conversion : V = 250 mL = 0,250 L</span><span class=\"l\">c = n / V = 0,0250 / 0,250</span><span class=\"l\">c = <b>0,100 mol/L</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Vérifier que n est en mol.","Convertir le volume V en litres si besoin (1 L = 1 000 mL).","Appliquer c = n / V.","Écrire le résultat en mol/L."],"id":"Q090"},{"mission":5,"slot":"nV","type":"num","ctx":"Une poche de perfusion contient V = 50,0 mL de solution de glucose de concentration molaire c = 0,278 mol/L.","ask":"Calculer la quantité de matière n de glucose contenue dans ce volume.","tag":"glucose","unit":"mol","ans":0.013900000000000003,"sig":3,"rel":0.025,"traps":[[13.900000000000002,"Convertis d'abord le volume en litres : 50,0 mL = 0,0500 L."],[5.5600000000000005,"n = c × V : on multiplie la concentration par le volume."],[0.17985611510791366,"n = c × V : on multiplie la concentration par le volume."]],"corr":"<span class=\"l\">Conversion : V = 50,0 mL = 0,0500 L</span><span class=\"l\">n = c × V = 0,278 × 0,0500</span><span class=\"l\">n = <b>0,0139 mol</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Convertir le volume V en litres (1 L = 1 000 mL).","Appliquer n = c × V.","Écrire le résultat en mol."],"id":"Q091"},{"mission":5,"slot":"nV","type":"num","ctx":"Une poche de perfusion contient V = 50,0 mL de solution de chlorure de sodium de concentration molaire c = 0,154 mol/L.","ask":"Calculer la quantité de matière n de chlorure de sodium contenue dans ce volume.","tag":"chlorure de sodium","unit":"mol","ans":0.0077,"sig":3,"rel":0.025,"traps":[[7.7,"Convertis d'abord le volume en litres : 50,0 mL = 0,0500 L."],[3.0799999999999996,"n = c × V : on multiplie la concentration par le volume."],[0.3246753246753247,"n = c × V : on multiplie la concentration par le volume."]],"corr":"<span class=\"l\">Conversion : V = 50,0 mL = 0,0500 L</span><span class=\"l\">n = c × V = 0,154 × 0,0500</span><span class=\"l\">n = <b>0,00770 mol</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Convertir le volume V en litres (1 L = 1 000 mL).","Appliquer n = c × V.","Écrire le résultat en mol."],"id":"Q092"},{"mission":5,"slot":"nV","type":"num","ctx":"Un flacon contient V = 250 mL de solution d'hydrogénocarbonate de sodium de concentration molaire c = 0,167 mol/L.","ask":"Calculer la quantité de matière n d'hydrogénocarbonate de sodium contenue dans ce volume.","tag":"hydrogénocarbonate de sodium","unit":"mol","ans":0.04175,"sig":3,"rel":0.025,"traps":[[41.75,"Convertis d'abord le volume en litres : 250 mL = 0,250 L."],[0.668,"n = c × V : on multiplie la concentration par le volume."],[1.497005988023952,"n = c × V : on multiplie la concentration par le volume."]],"corr":"<span class=\"l\">Conversion : V = 250 mL = 0,250 L</span><span class=\"l\">n = c × V = 0,167 × 0,250</span><span class=\"l\">n = <b>0,0418 mol</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Convertir le volume V en litres (1 L = 1 000 mL).","Appliquer n = c × V.","Écrire le résultat en mol."],"id":"Q093"},{"mission":5,"slot":"Cm2c","type":"num","ctx":"La glycémie d'un patient à jeun correspond à une concentration massique en glucose dans le sang C<sub>m</sub> = 1,00 g/L.","data":"Masse molaire du glucose (C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>) : M = 180,0 g/mol.","ask":"Calculer la concentration molaire c de glucose.","tag":"glucose","unit":"mol/L","ans":0.005555555555555556,"sig":3,"rel":0.025,"traps":[[180,"Tu as multiplié. Pour passer de C<sub>m</sub> à c, on divise : c = C<sub>m</sub> / M."],[180,"Tu as inversé la division : c = C<sub>m</sub> / M."]],"corr":"<span class=\"l\">C<sub>m</sub> = c × M donc c = C<sub>m</sub> / M</span><span class=\"l\">c = 1,00 / 180,0</span><span class=\"l\">c = <b>0,00556 mol/L</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Repérer C<sub>m</sub> en g/L et M en g/mol.","Appliquer c = C<sub>m</sub> / M.","Écrire le résultat en mol/L."],"id":"Q094"},{"mission":5,"slot":"Cm2c","type":"num","ctx":"Une solution de bicarbonate pour bain de bouche contient de l'hydrogénocarbonate de sodium à la concentration massique C<sub>m</sub> = 14 g/L.","data":"Masse molaire de l'hydrogénocarbonate de sodium (NaHCO<sub>3</sub>) : M = 84,0 g/mol.","ask":"Calculer la concentration molaire c d'hydrogénocarbonate de sodium.","tag":"hydrogénocarbonate de sodium","unit":"mol/L","ans":0.16666666666666666,"sig":2,"rel":0.025,"traps":[[1176,"Tu as multiplié. Pour passer de C<sub>m</sub> à c, on divise : c = C<sub>m</sub> / M."],[6,"Tu as inversé la division : c = C<sub>m</sub> / M."]],"corr":"<span class=\"l\">C<sub>m</sub> = c × M donc c = C<sub>m</sub> / M</span><span class=\"l\">c = 14 / 84,0</span><span class=\"l\">c = <b>0,17 mol/L</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Repérer C<sub>m</sub> en g/L et M en g/mol.","Appliquer c = C<sub>m</sub> / M.","Écrire le résultat en mol/L."],"id":"Q095"},{"mission":5,"slot":"Cm2c","type":"num","ctx":"Une boisson enrichie contient de l'acide ascorbique (vitamine C) à la concentration massique C<sub>m</sub> = 0,500 g/L.","data":"Masse molaire de l'acide ascorbique (C<sub>6</sub>H<sub>8</sub>O<sub>6</sub>) : M = 176,0 g/mol.","ask":"Calculer la concentration molaire c d'acide ascorbique.","tag":"acide ascorbique","unit":"mol/L","ans":0.002840909090909091,"sig":3,"rel":0.025,"traps":[[88,"Tu as multiplié. Pour passer de C<sub>m</sub> à c, on divise : c = C<sub>m</sub> / M."],[352,"Tu as inversé la division : c = C<sub>m</sub> / M."]],"corr":"<span class=\"l\">C<sub>m</sub> = c × M donc c = C<sub>m</sub> / M</span><span class=\"l\">c = 0,500 / 176,0</span><span class=\"l\">c = <b>0,00284 mol/L</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Repérer C<sub>m</sub> en g/L et M en g/mol.","Appliquer c = C<sub>m</sub> / M.","Écrire le résultat en mol/L."],"id":"Q096"},{"mission":5,"slot":"Cm2c","type":"num","ctx":"L'analyse de sang d'un patient indique une concentration massique en urée C<sub>m</sub> = 0,30 g/L.","data":"Masse molaire de l'urée (CH<sub>4</sub>N<sub>2</sub>O) : M = 60,0 g/mol.","ask":"Calculer la concentration molaire c d'urée.","tag":"urée","unit":"mol/L","ans":0.005,"sig":2,"rel":0.025,"traps":[[18,"Tu as multiplié. Pour passer de C<sub>m</sub> à c, on divise : c = C<sub>m</sub> / M."],[200,"Tu as inversé la division : c = C<sub>m</sub> / M."]],"corr":"<span class=\"l\">C<sub>m</sub> = c × M donc c = C<sub>m</sub> / M</span><span class=\"l\">c = 0,30 / 60,0</span><span class=\"l\">c = <b>0,0050 mol/L</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Repérer C<sub>m</sub> en g/L et M en g/mol.","Appliquer c = C<sub>m</sub> / M.","Écrire le résultat en mol/L."],"id":"Q097"},{"mission":5,"slot":"c2Cm","type":"num","ctx":"Une solution d'acide éthanoïque utilisée en TP a une concentration molaire c = 1,0 mol/L.","data":"Masse molaire de l'acide éthanoïque (C<sub>2</sub>H<sub>4</sub>O<sub>2</sub>) : M = 60,0 g/mol.","ask":"Calculer la concentration massique C<sub>m</sub> d'acide éthanoïque.","tag":"acide éthanoïque","unit":"g/L","ans":60,"sig":2,"rel":0.025,"traps":[[0.016666666666666666,"Pour passer de c à C<sub>m</sub>, on multiplie : C<sub>m</sub> = c × M."]],"corr":"<span class=\"l\">C<sub>m</sub> = c × M = 1,0 × 60,0</span><span class=\"l\">C<sub>m</sub> = <b>60 g/L</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Repérer c en mol/L et M en g/mol.","Appliquer C<sub>m</sub> = c × M.","Écrire le résultat en g/L."],"id":"Q098"},{"mission":5,"slot":"c2Cm","type":"num","ctx":"Au laboratoire, une solution d'hydroxyde de sodium a une concentration molaire c = 0,100 mol/L.","data":"Masse molaire de l'hydroxyde de sodium (NaOH) : M = 40,0 g/mol.","ask":"Calculer la concentration massique C<sub>m</sub> d'hydroxyde de sodium.","tag":"hydroxyde de sodium","unit":"g/L","ans":4,"sig":3,"rel":0.025,"traps":[[0.0025,"Pour passer de c à C<sub>m</sub>, on multiplie : C<sub>m</sub> = c × M."],[400,"Pour passer de c à C<sub>m</sub>, on multiplie : C<sub>m</sub> = c × M."]],"corr":"<span class=\"l\">C<sub>m</sub> = c × M = 0,100 × 40,0</span><span class=\"l\">C<sub>m</sub> = <b>4,00 g/L</b></span><span class=\"l small muted\">Résultat arrondi à 3 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Repérer c en mol/L et M en g/mol.","Appliquer C<sub>m</sub> = c × M.","Écrire le résultat en g/L."],"id":"Q099"},{"mission":5,"slot":"c2Cm","type":"num","ctx":"Le sang d'un patient a une concentration molaire en urée c = 0,0050 mol/L.","data":"Masse molaire de l'urée (CH<sub>4</sub>N<sub>2</sub>O) : M = 60,0 g/mol.","ask":"Calculer la concentration massique C<sub>m</sub> d'urée.","tag":"urée","unit":"g/L","ans":0.3,"sig":2,"rel":0.025,"traps":[[0.00008333333333333333,"Pour passer de c à C<sub>m</sub>, on multiplie : C<sub>m</sub> = c × M."],[12000,"Pour passer de c à C<sub>m</sub>, on multiplie : C<sub>m</sub> = c × M."]],"corr":"<span class=\"l\">C<sub>m</sub> = c × M = 0,0050 × 60,0</span><span class=\"l\">C<sub>m</sub> = <b>0,30 g/L</b></span><span class=\"l small muted\">Résultat arrondi à 2 chiffres significatifs, comme la donnée la moins précise.</span>","method":["Repérer c en mol/L et M en g/mol.","Appliquer C<sub>m</sub> = c × M.","Écrire le résultat en g/L."],"id":"Q100"}];
+function buildQs(k){
+  const mi=MISSIONS[k];const used=new Set();S.vues=S.vues||{};
+  return mi.plan.map(slot=>{
+    const pool=shuffle(BANK.filter(q=>q.mission===k&&q.slot===slot&&!used.has(q.id)));
+    pool.sort((a,b)=>(S.vues[a.id]||0)-(S.vues[b.id]||0));
+    const q=pool[0];used.add(q.id);S.vues[q.id]=(S.vues[q.id]||0)+1;
+    return JSON.parse(JSON.stringify(q));
+  });
+}
+
+/* ================== Saisie et correction ================== */
+function parseNum(s){
+  if(!s) return NaN;
+  s=String(s).trim().replace(/\s+/g,"").replace(/,/g,".").replace(/[−–]/g,"-");
+  s=s.replace(/[x×*]10\^?\(?([-+]?\d+)\)?/i,"e$1").replace(/^10\^\(?([-+]?\d+)\)?/,"1e$1");
+  const m=s.match(/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?/i);
+  return m?parseFloat(m[0]):NaN;
+}
+const close=(v,a,rel)=>Math.abs(v-a)<=Math.abs(a)*rel+1e-12;
+function judgeNum(q,v){
+  if(close(v,q.ans,q.rel)) return {ok:true};
+  for(const [val,msg] of (q.traps||[])) if(close(v,val,0.03)) return {ok:false,msg};
+  if(close(v,q.ans*1000,0.03)||close(v,q.ans/1000,0.03)) return {ok:false,msg:"Ton résultat est 1 000 fois trop grand ou trop petit : vérifie les conversions d'unités (g et mg, L et mL, mol et mmol)."};
+  if(close(v,q.ans,0.12)) return {ok:false,msg:"Tu es proche : vérifie les valeurs utilisées et ton arrondi."};
+  return {ok:false};
+}
+
+/* ================== État ================== */
+let S;
+function fresh(){return {eleve:null,missions:MISSIONS.map(()=>({best:null,last:null,tentatives:0,reussie:false,aides:0})),act:{sorties:0,horsMs:0,copies:0,times:[],rapides:0,apresSortie:0},ui:{fs:17,ease:false},envoi:null,autoSent:false};}
+function load(){try{const r=localStorage.getItem(KEY);S=r?JSON.parse(r):fresh();if(S.eleve&&S.eleve.nom)S.eleve.nom=S.eleve.nom.trim().charAt(0).toUpperCase();if(!S.missions||S.missions.length!==MISSIONS.length)S=fresh();}catch(e){S=fresh();}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+/* ================== Suivi d'activité ================== */
+let outAt=null, run=null;
+function goOut(){if(outAt)return;outAt=Date.now();S.act.sorties++;if(run&&!run.locked)run.outDuring=true;save();}
+function comeBack(){if(!outAt)return;S.act.horsMs+=Date.now()-outAt;outAt=null;save();}
+function median(a){if(!a.length)return 0;const s=a.slice().sort((x,y)=>x-y);const h=Math.floor(s.length/2);return s.length%2?s[h]:(s[h-1]+s[h])/2;}
+
+/* ================== Affichage ================== */
+const $=id=>document.getElementById(id);
+const app=()=>$("app");
+function applyUI(){
+  document.documentElement.style.setProperty("--fs",S.ui.fs+"px");
+  document.body.classList.toggle("ease",S.ui.ease);
+  $("easeBtn").setAttribute("aria-pressed",S.ui.ease?"true":"false");
+  const n=S.missions.filter(m=>m.reussie).length;
+  $("stars").innerHTML="★".repeat(n)+`<span class="off">${"★".repeat(MISSIONS.length-n)}</span>`+` <span class="small">${n}/${MISSIONS.length}</span>`;
+  $("stars").setAttribute("aria-label",`${n} missions réussies sur ${MISSIONS.length}`);
+}
+function unlocked(k){return k===0||S.missions[k-1].reussie;}
+
+function renderHome(){
+  run=null;applyUI();
+  if(!S.eleve){
+    app().innerHTML=`<div class="card"><h2>Bienvenue au labo</h2>
+      <div class="enonce"><p>Six missions t'attendent pour t'entraîner aux calculs de la préparation des solutions : masse molaire, quantité de matière, dilution, dissolution et concentration molaire. Chaque mission se valide avec presque toutes les réponses justes (3/4 pour la première, 4/5 pour les suivantes). Si tu échoues, tu recommences avec de nouvelles valeurs.</p>
+      <p>Garde ta calculatrice à côté de toi. Le bouton « Voir la méthode » t'aide à chaque question et l'encadré « À retenir » rappelle les formules.</p></div>
+      <div class="form" id="idForm">
+        <label for="prenom">Prénom<input id="prenom" autocomplete="given-name" required></label>
+        <label for="nom">Première lettre du nom<input id="nom" maxlength="1" autocomplete="off" autocapitalize="characters" required style="max-width:5em;text-transform:uppercase;text-align:center"></label>
+        <label for="classe">Classe<select id="classe" required><option value="" selected disabled>Choisis ta classe</option><option value="1ST2S">Première ST2S</option><option value="TST2S">Terminale ST2S</option></select></label>
+        <p class="status ko" id="idErr" hidden>Indique ton prénom, la première lettre de ton nom et ta classe pour commencer.</p>
+        <button class="btn" type="button" id="enterBtn">Entrer dans le labo</button>
+      </div></div>`;
+    const enter=()=>{
+      const p=$("prenom").value.trim(),n=$("nom").value.trim().charAt(0).toUpperCase(),c=$("classe").value.trim();
+      if(!p||!n||!c){$("idErr").hidden=false;return;}
+      S.eleve={prenom:p,nom:n,classe:c};save();renderHome();};
+    $("enterBtn").addEventListener("click",enter);
+    $("idForm").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.tagName==="INPUT"){e.preventDefault();enter();}});
+    return;
+  }
+  const cards=MISSIONS.map((mi,k)=>{const m=S.missions[k];const open=unlocked(k);
+    const pill=m.reussie?`<span class="pill done">Réussie · ${m.best??0}/${nq(k)}</span>`:!open?`<span class="pill lock">Verrouillée</span>`:m.best!==null?`<span class="pill">Meilleur score : ${m.best}/${nq(k)}</span>`:`<span class="pill">À faire</span>`;
+    return `<article class="mcard${open?"":" locked"}"><span class="mnum">Mission ${k+1}</span><h3>${mi.t}</h3><p class="small muted">${mi.obj}</p>${pill}
+      <button class="btn${m.reussie?" ghost":""}" data-start="${k}" ${open?"":"disabled"}>${m.reussie?"Rejouer":m.best!==null?"Recommencer":"Commencer"}</button></article>`;}).join("");
+  const done=S.missions.every(m=>m.reussie);
+  app().innerHTML=`<h2>Bonjour ${esc(S.eleve.prenom)}</h2><p class="muted">Réussis chaque mission pour ouvrir la suivante.</p>
+    <div class="missions">${cards}</div>
+    <div class="sendzone card">
+      <h3>${done?"Bravo, toutes les missions sont réussies !":"Envoyer mes résultats"}</h3>
+      <p class="small">Tes meilleurs scores sont envoyés à ton professeur. Tu peux les envoyer à la fin de la séance même si tu n'as pas tout terminé.</p>
+      <div class="row"><button class="btn" id="sendBtn">Envoyer mes résultats au professeur</button></div>
+      <p id="sendStatus" class="status ${S.envoi?"ok":""}" ${S.envoi?"":"hidden"}>${S.envoi?"Dernier envoi réussi le "+S.envoi+".":""}</p>
+      <div class="row small"><span class="muted">${esc(S.eleve.prenom)} ${esc(S.eleve.nom)}. · ${esc(S.eleve.classe)}</span>
+        <button class="tbtn" id="resetBtn">Changer d'élève</button></div>
+    </div>`;
+  app().querySelectorAll("[data-start]").forEach(b=>b.addEventListener("click",()=>startMission(+b.dataset.start)));
+  $("sendBtn").addEventListener("click",()=>sendResults(false));
+  $("resetBtn").addEventListener("click",function(){
+    if(this.dataset.c){S=Object.assign(fresh(),{ui:S.ui,act:S.act});save();renderHome();return;}
+    this.dataset.c="1";this.textContent="Confirmer : la progression sera effacée";});
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+function startMission(k){
+  if(!unlocked(k))return;
+  S.missions[k].tentatives++;save();
+  run={k,qs:buildQs(k),i:0,res:[],aides:0,locked:false};save();
+  renderQ();window.scrollTo(0,0);
+}
+function renderQ(){
+  const {k,qs,i}=run;const q=qs[i];const mi=MISSIONS[k];
+  run.locked=false;run.second=false;run.outDuring=false;run.qStart=Date.now();run.showedMethod=false;
+  const dots=qs.map((_,j)=>`<span class="dot ${j<i?(run.res[j]===2?"ok2":run.res[j]?"ok":"ko"):j===i?"cur":""}"></span>`).join("");
+  const input=q.type==="num"
+   ?`<div><label class="lcdlab" for="ans">Ma réponse :</label><div class="lcd"><input id="ans" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="0,000" aria-describedby="ansHint"><span class="u">${q.unit}</span></div>
+     <p class="hintline" id="ansHint">Fais ton calcul dans la calculatrice : en appuyant sur =, le résultat s'écrit ici. Arrondis-le avant de valider.</p></div>`
+   :`<fieldset><legend class="sr">Choisis une réponse</legend>${q.choices.map((c,j)=>`<label class="opt" id="opt${j}"><input type="radio" name="qc" value="${j}"><span>${c}</span></label>`).join("")}</fieldset>`;
+  app().innerHTML=`<div class="mtop"><div><span class="mnum">Mission ${k+1} · ${mi.t}</span><div class="small muted">Question ${i+1} sur ${qs.length} · ${q.id}</div></div>
+     <div class="dots" aria-hidden="true">${dots}</div><button class="tbtn" id="quit">Retour aux missions</button></div>
+   <div class="grid"><section class="qcard enonce" id="qcard">
+     <p>${q.ctx}</p>
+     ${q.data?`<div class="doc"><div class="doc-t">Données</div><div class="doc-c">${q.data}</div></div>`:""}
+     <p class="ask">${q.ask}</p>
+     ${input}
+     <div class="actions"><button class="btn" id="valid">Valider</button><button class="btn ghost" id="methBtn">Voir la méthode</button><button class="btn ghost" id="speak">Écouter</button></div>
+     <div id="methBox" hidden></div><div id="fbBox"></div>
+   </section>
+   <aside><div class="retenir"><h3>À retenir</h3>${mi.retenir}${k>0?`<p class="small"><b>Chiffres significatifs</b> : le résultat en a autant que la donnée la moins précise. Les zéros à droite comptent (2,50 g : 3 chiffres significatifs).</p>`:""}</div>${calcHTML()}</aside></div>`;
+  $("quit").addEventListener("click",function(){if(this.dataset.c){renderHome();return;}this.dataset.c="1";this.textContent="Quitter ? La mission sera perdue";});
+  $("valid").addEventListener("click",validate);
+  $("methBtn").addEventListener("click",()=>showMethod(false));
+  $("speak").addEventListener("click",()=>speak($("qcard")));
+  bindCalc();
+  const a=$("ans");if(a){a.focus();a.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();validate();}});}
+}
+function showMethod(auto){
+  const q=run.qs[run.i];const steps=(q.method||MISSIONS[run.k].method).concat(q.type==="num"&&q.sig&&!q.noSig?["Arrondir le résultat avec autant de chiffres significatifs que la donnée la moins précise."]:[]);
+  const b=$("methBox");b.hidden=auto===true?false:!b.hidden;
+  if(!b.hidden){b.innerHTML=`<div class="method"><b>Méthode</b><ol>${steps.map(s=>`<li>${s}</li>`).join("")}</ol></div>`;
+    if(!run.showedMethod&&auto!==true){run.showedMethod=true;run.aides++;}}
+  $("methBtn").textContent=b.hidden?"Voir la méthode":"Cacher la méthode";
+}
+function validate(){
+  if(run.locked){next();return;}
+  const q=run.qs[run.i];let res,chosen=null;
+  if(q.type==="num"){
+    if(isExpr($("ans").value)){$("fbBox").innerHTML=`<p class="status ko">Écris un nombre. Pour calculer, utilise la calculatrice : le résultat s'inscrit tout seul dans ta réponse.</p>`;return;}
+    const v=evalAns($("ans").value);run.typed=$("ans").value;
+    if(isNaN(v)){$("fbBox").innerHTML=`<p class="status ko">Écris un nombre avant de valider.</p>`;return;}
+    res=judgeNum(q,v);
+    if(!res.ok&&!run.second){
+      run.second=true;showMethod(true);
+      $("fbBox").innerHTML=`<div class="fb retry" role="status"><div class="verdict">Pas encore : deuxième essai</div>
+        ${res.msg?`<p>${res.msg}</p>`:"<p>Relis la méthode ci-dessus, refais ton calcul et valide à nouveau.</p>"}</div>`;
+      $("valid").textContent="Valider mon deuxième essai";$("ans").select();return;
+    }
+    $("ans").disabled=true;
+  }else{
+    const c=app().querySelector('input[name="qc"]:checked');
+    if(!c){$("fbBox").innerHTML=`<p class="status ko">Choisis une réponse avant de valider.</p>`;return;}
+    chosen=+c.value;res={ok:chosen===q.correct};
+    app().querySelectorAll('input[name="qc"]').forEach(x=>x.disabled=true);
+    $("opt"+q.correct).classList.add("good");if(!res.ok)$("opt"+chosen).classList.add("bad");
+  }
+  run.locked=true;run.res.push(res.ok?(run.second?2:1):0);if(res.ok&&run.second)run.secondes=(run.secondes||0)+1;
+  const dt=(Date.now()-run.qStart)/1000;S.act.times.push(Math.round(dt));
+  if(dt<(q.type==="num"?8:3))S.act.rapides++;
+  if(run.outDuring)S.act.apresSortie++;
+  save();
+  const ansTxt=q.type==="num"?`<span class="l">Réponse attendue : <b>${q.show||fs(q.ans,q.sig||3)} ${q.unit==="(sans unité)"?"":q.unit}</b></span>`:"";
+  $("fbBox").innerHTML=`<div class="fb ${res.ok?"ok":"ko"}" role="status"><div class="verdict">${res.ok?(run.second?"Bonne réponse au deuxième essai":"Bonne réponse"):"Ce n'est pas la bonne réponse"}</div>
+    ${res.msg?`<p>${res.msg}</p>`:""}<div class="corr">${res.ok?"":ansTxt}${q.corr}</div></div>`;
+  if(res.ok&&q.type==="num"&&isExpr(run.typed)){$("fbBox").querySelector(".fb").insertAdjacentHTML("beforeend",`<p class="cswarn">Ton calcul est juste. Sur ta copie, écris ensuite le résultat ${q.sig&&!q.noSig?`arrondi à ${q.sig} chiffres significatifs`:"arrondi"} : ${q.show||fs(q.ans,q.sig||3)}${q.unit==="(sans unité)"?"":" "+q.unit}.</p>`);}
+  else if(res.ok&&q.type==="num"&&q.sig&&!q.noSig&&cs(run.typed)!==q.sig){$("fbBox").querySelector(".fb").insertAdjacentHTML("beforeend",`<p class="cswarn">Ta valeur est juste, mais tu l'as écrite avec ${cs(run.typed)} chiffre${cs(run.typed)>1?"s":""} significatif${cs(run.typed)>1?"s":""}. Il en faut ${q.sig} : ${fs(q.ans,q.sig)} ${q.unit}.</p>`);run.csErr=(run.csErr||0)+1;}
+  const b=$("valid");b.textContent=run.i===run.qs.length-1?"Voir mon score":"Question suivante";b.focus();
+}
+function next(){run.i++;if(run.i>=run.qs.length)finish();else{renderQ();window.scrollTo(0,0);}}
+function finish(){
+  const {k}=run;const ok=run.res.filter(Boolean).length;const m=S.missions[k];
+  m.last=ok;m.best=Math.max(m.best??0,ok);m.aides+=run.aides;m.secondes=(m.secondes||0)+(run.secondes||0);m.csErr=(m.csErr||0)+(run.csErr||0);m.ratees=run.qs.filter((q,j)=>!run.res[j]).map(q=>q.id);const win=ok>=passOf(k);if(win)m.reussie=true;save();applyUI();
+  const all=S.missions.every(x=>x.reussie);
+  app().innerHTML=`<div class="card" style="display:grid;gap:14px;max-width:640px">
+    <span class="mnum">Mission ${k+1} · ${MISSIONS[k].t}</span>
+    <div class="score">${ok}/${nq(k)}</div>
+    <h2>${win?"Mission réussie":"Encore un essai"}</h2>
+    <p>${win?(all?"Toutes les missions sont réussies. Tes résultats partent chez ton professeur.":"La mission suivante est ouverte."):`Il faut au moins ${passOf(k)} bonnes réponses sur ${nq(k)}. Relis l'encadré « À retenir » et utilise la méthode : les nouvelles questions auront d'autres valeurs.`}</p>
+    <p id="sendStatus" class="status" hidden></p>
+    <div class="row">${win?"":`<button class="btn" id="again">Recommencer la mission</button>`}<button class="btn${win?"":" ghost"}" id="home">Retour aux missions</button></div></div>`;
+  run=null;
+  $("home").addEventListener("click",renderHome);
+  if($("again"))$("again").addEventListener("click",()=>startMission(k));
+  if(all&&!S.autoSent){S.autoSent=true;save();sendResults(true);}
+}
+
+/* ================== Envoi des résultats ================== */
+function payload(){
+  const tot=MISSIONS.reduce((s,mi)=>s+mi.plan.length,0);const ok=S.missions.reduce((s,m)=>s+(m.best||0),0);
+  const p={prenom:S.eleve.prenom,nom:S.eleve.nom,initiale:S.eleve.nom,classe:S.eleve.classe,jeu:JEU,
+    pct:Math.round(ok/tot*100),ok,tot,
+    missions:MISSIONS.map((mi,k)=>{const m=S.missions[k];return {mission:k+1,titre:mi.t,ok:m.best||0,tot:nq(k),pct:Math.round((m.best||0)/nq(k)*100),reussie:m.reussie,tentatives:m.tentatives,aidesMethode:m.aides,reussiesDeuxiemeEssai:m.secondes||0,erreursChiffresSignificatifs:m.csErr||0,questionsRateesDernierEssai:m.ratees||[]};}),
+    activite:{sortiesPage:S.act.sorties,tempsHorsPage:Math.round(S.act.horsMs/1000),copies:S.act.copies,tempsMedian:median(S.act.times),reponsesRapides:S.act.rapides,reponsesApresSortie:S.act.apresSortie,nbReponses:S.act.times.length}};
+  if(TEST)p.test=true;
+  return p;
+}
+function setStatus(cls,txt){const el=$("sendStatus");if(!el)return;el.hidden=false;el.className="status "+cls;el.textContent=txt;}
+function sendResults(auto){
+  if(!S.eleve)return;
+  setStatus("wait","Envoi en cours…");
+  fetch(WORKER,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify(payload())})
+   .then(r=>{if(!r.ok)throw new Error(r.status);
+     S.envoi=new Date().toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"});save();
+     setStatus("ok","Résultats envoyés au professeur ("+S.envoi+").");})
+   .catch(()=>{if(auto)S.autoSent=false;save();setStatus("ko","L'envoi n'a pas fonctionné. Vérifie la connexion puis appuie sur « Envoyer mes résultats » depuis la page des missions.");});
+}
+
+
+/* ================== Calculatrice ================== */
+let calcExpr="", calcHist="", calcLast=null;
+const CKEYS=[["(","op"],[")","op"],["⌫","op"],["C","op"],["7"],["8"],["9"],["÷","op"],["4"],["5"],["6"],["×","op"],["1"],["2"],["3"],["−","op"],["0"],[","],["×10ⁿ","op"],["+","op"]];
+function calcHTML(){
+  return `<section class="calc" aria-label="Calculatrice"><h3>Calculatrice</h3>
+   <div class="cdisp"><div class="hist" id="cHist">${esc(calcHist)}</div><input id="cIn" inputmode="decimal" autocomplete="off" spellcheck="false" aria-label="Calcul" placeholder="0" value="${esc(calcExpr)}"></div>
+   <p class="cerr" id="cErr" aria-live="polite"></p><p class="cinfo" id="cInfo" aria-live="polite"></p>
+   <div class="ckeys">${CKEYS.map(([k,c])=>`<button type="button" class="ck ${c||""}" data-k="${k}" aria-label="${{"⌫":"Effacer le dernier caractère","C":"Tout effacer","×10ⁿ":"fois dix puissance","−":"moins","÷":"divisé par","×":"fois"}[k]||k}">${k}</button>`).join("")}
+    <button type="button" class="ck eq" data-k="=" aria-label="Égal : calculer et écrire le résultat dans ma réponse">=</button></div>
+   <p class="small muted" style="margin:0">Appuie sur = : le résultat s'écrit dans ta réponse. ×10ⁿ écrit E (2,5E−3 = 2,5 × 10<sup>−3</sup>).</p></section>`;
+}
+function calcEval(src){
+  const t=src.replace(/\s+/g,"").replace(/,/g,".").replace(/[−–]/g,"-").replace(/×/g,"*").replace(/÷/g,"/").replace(/[xX]/g,"*").replace(/:/g,"/");
+  let i=0;
+  const peek=()=>t[i];
+  function num(){const m=t.slice(i).match(/^(\d+\.?\d*|\.\d+)(E[-+]?\d+)?/i);if(!m)throw 0;i+=m[0].length;return parseFloat(m[0]);}
+  function prim(){if(peek()==="("){i++;const v=expr();if(peek()!==")")throw 0;i++;return v;}if(peek()==="-"){i++;return -prim();}if(peek()==="+"){i++;return prim();}return num();}
+  function pow(){const b=prim();if(peek()==="^"){i++;return Math.pow(b,pow());}return b;}
+  function term(){let v=pow();while(peek()==="*"||peek()==="/"){const o=t[i++];const w=pow();v=o==="*"?v*w:v/w;}return v;}
+  function expr(){let v=term();while(peek()==="+"||peek()==="-"){const o=t[i++];const w=term();v=o==="+"?v+w:v-w;}return v;}
+  if(!t)throw 0;const v=expr();if(i<t.length||!isFinite(v))throw 0;return v;
+}
+function calcFmt(v){
+  if(v===0)return "0";const a=Math.abs(v);
+  if(a>=1e-3&&a<1e9)return String(+v.toPrecision(10)).replace(".",",");
+  const [m,e]=v.toExponential(6).split("e");return String(+m).replace(".",",")+"E"+(+e<0?"−"+(-e):+e);
+}
+function toAnswer(v){
+  const a=$("ans"),info=$("cInfo");if(info)info.textContent="";
+  if(!a||a.disabled)return;
+  a.value=calcFmt(v).replace("−","-");
+  const box=a.closest(".lcd");box.classList.remove("flash");void box.offsetWidth;box.classList.add("flash");
+  if(info)info.textContent="Résultat écrit dans ta réponse : arrondis-le si besoin, puis valide.";
+  const r=box.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)box.scrollIntoView({block:"center",behavior:"smooth"});
+}
+function bindCalc(){
+  const inp=$("cIn"),err=$("cErr");
+  const set=v=>{calcExpr=v;inp.value=v;};
+  const run_=()=>{err.textContent="";try{const v=calcEval(inp.value);calcHist=inp.value+" =";calcLast=v;$("cHist").textContent=calcHist;set(calcFmt(v));toAnswer(v);}catch(e){err.textContent="Calcul impossible : vérifie les parenthèses et les opérations.";}};
+  inp.addEventListener("input",()=>{calcExpr=inp.value;});
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();e.stopPropagation();run_();}});
+  document.querySelectorAll(".ck").forEach(b=>b.addEventListener("click",()=>{
+    const k=b.dataset.k;err.textContent="";
+    if(k==="=")return run_();
+    if(k==="C"){set("");calcHist="";calcLast=null;$("cHist").textContent="";return;}
+    if(k==="⌫")return set(inp.value.slice(0,-1));
+    if(k==="ans"){
+      const a=$("ans");if(!a||a.disabled){err.textContent=a?"La question est déjà validée.":"Cette question se répond en choisissant une case.";return;}
+      let v;try{v=calcEval(inp.value);}catch(e){err.textContent="Fais d'abord un calcul valide.";return;}
+      a.value=calcFmt(v).replace("−","-");a.focus();return;
+    }
+    set(inp.value+(k==="×10ⁿ"?"E":k));
+  }));
+}
+
+
+/* ================== Réponse : nombre ou calcul ================== */
+const unitStrip = t => String(t).trim().replace(/\s*(g\/mol|g\/L|mol\/L|mmol|mol|mg|mL|L|g)\s*$/i,"");
+function isExpr(t){
+  let x=unitStrip(t).replace(/\s+/g,"").replace(/[−–]/g,"-");
+  x=x.replace(/^[-+]/,"").replace(/[x×*]10\^?\(?[-+]?\d+\)?$/i,"").replace(/e[-+]?\d+$/i,"");
+  return /[-+*\/×÷:xX^()]/.test(x);
+}
+function evalAns(t){
+  const u=unitStrip(t);
+  if(!u.trim()) return NaN;
+  try{ return calcEval(u.replace(/[xX]/g,"×")); }catch(e){ return isExpr(u)?NaN:parseNum(u); }
+}
+function ansPreview(){
+  const el=$("ansPrev"),t=$("ans").value;if(!el)return;
+  if(!isExpr(t)){el.textContent="";return;}
+  const v=evalAns(t);
+  el.textContent=isNaN(v)?"Calcul incomplet ou mal écrit.":"Résultat du calcul : "+calcFmt(v).replace("E","×10^");
+}
+
+/* ================== Lecture à voix haute ================== */
+function speak(el){
+  try{
+    if(speechSynthesis.speaking){speechSynthesis.cancel();return;}
+    let t=el.innerText.split("\nValider")[0];
+    t=t.replace(/g\/mol/g," grammes par mole").replace(/g\/L/g," grammes par litre").replace(/mol\/L/g," moles par litre")
+       .replace(/\bmL\b/g," millilitres").replace(/\bmmol\b/g," millimoles").replace(/\bmg\b/g," milligrammes")
+       .replace(/×/g," fois ").replace(/\//g," divisé par ").replace(/\bM\(/g,"M de (");
+    const u=new SpeechSynthesisUtterance(t);u.lang="fr-FR";u.rate=.92;speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ================== Démarrage ================== */
+function init(){
+  load();
+  document.addEventListener("visibilitychange",()=>document.hidden?goOut():comeBack());
+  window.addEventListener("blur",goOut);window.addEventListener("focus",comeBack);
+  document.addEventListener("copy",()=>{S.act.copies++;save();});
+  $("fsMinus").addEventListener("click",()=>{S.ui.fs=Math.max(14,S.ui.fs-1);save();applyUI();});
+  $("fsPlus").addEventListener("click",()=>{S.ui.fs=Math.min(26,S.ui.fs+1);save();applyUI();});
+  $("easeBtn").addEventListener("click",()=>{S.ui.ease=!S.ui.ease;save();applyUI();});
+  renderHome();
+}
+if(typeof window!=="undefined"&&typeof document!=="undefined") init();
+</script>
+<style>.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}</style>
+</body>
+</html>
